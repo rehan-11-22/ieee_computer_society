@@ -13,10 +13,9 @@ export async function POST(req: Request) {
     });
 
     if (action === "signup") {
-      const { data, error } = await supabase.auth.admin.createUser({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        email_confirm: true,
       });
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 400 });
@@ -36,24 +35,27 @@ export async function POST(req: Request) {
     });
 
     // Set JWT as httpOnly cookie for secure server-side auth
-    response.cookies.set("admin_token", data.session.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60, // 1 hour
-    });
+    if (data.session) {
+      response.cookies.set("admin_token", data.session.access_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60, // 1 hour
+      });
 
-    response.cookies.set("admin_refresh", data.session.refresh_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    });
+      response.cookies.set("admin_refresh", data.session.refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+      });
+    }
 
     return response;
-  } catch {
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  } catch (err: any) {
+    console.error("Auth error:", err);
+    return NextResponse.json({ error: err.message || "Server error" }, { status: 500 });
   }
 }
