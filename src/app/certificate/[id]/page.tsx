@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import { Certificate } from "@/lib/db";
+import type { Certificate } from "@/lib/types";
 
 export default function CertificateView({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -33,24 +33,35 @@ export default function CertificateView({ params }: { params: Promise<{ id: stri
             <h2>Sample Certificate</h2>
             <p>Click the Credential ID to verify this certificate.</p>
           </div>
-          <button className="primary printHide" onClick={handlePrint}>
-            Print / Save PDF
-          </button>
+          <div className="certificateActions printHide">
+            <a
+              className="primary"
+              href={`/api/certificates/${encodeURIComponent(cert.credentialId)}/pdf`}
+            >
+              Download PDF
+            </a>
+            <button className="secondary" onClick={handlePrint}>Print Preview</button>
+          </div>
         </div>
 
-        <div className="certificate">
+        <div
+          className={`certificate${cert.templateId ? " uploadedTemplateCertificate" : ""}`}
+          style={cert.templateId ? { backgroundImage: `url(/api/templates/${cert.templateId}/image)` } : undefined}
+        >
           <div className="corner top"></div>
           <div className="corner bottom"></div>
 
-          <div className="certTop">
-            <div className="certLogo">CS</div>
-            <div>
-              <strong>IEEE Computer Society</strong>
-              <span>Superior University Student Branch</span>
+          {!cert.templateId && (
+            <div className="certTop">
+              <div className="certLogo">CS</div>
+              <div>
+                <strong>IEEE Computer Society</strong>
+                <span>Superior University Student Branch</span>
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="certBody">
+          <div className={`certBody${cert.templateId ? " uploadedTemplateBody" : ""}`}>
             <div className="certTitle">{cert.certificateType.toUpperCase()}</div>
             <p>This certificate is proudly presented to</p>
             <h1>{cert.recipientName}</h1>
@@ -61,7 +72,7 @@ export default function CertificateView({ params }: { params: Promise<{ id: stri
 
             <div className="certId">
               Credential ID:{" "}
-              <Link href={`/verify/${cert.credentialId}`} style={{ color: "var(--blue)", fontWeight: 800 }}>
+              <Link href={cert.verificationLink} style={{ color: "var(--blue)", fontWeight: 800 }}>
                 {cert.credentialId} ↗
               </Link>
             </div>

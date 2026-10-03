@@ -2,11 +2,10 @@ import type { Metadata } from "next";
 import { DM_Sans, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
+import { getCurrentSession } from "@/lib/auth";
 
 const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans" });
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
-
-import { cookies } from "next/headers";
 
 export const metadata: Metadata = {
   title: "IEECS Certificate Verification Portal",
@@ -20,9 +19,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("admin_token")?.value;
-  const isLoggedIn = !!token;
+  const isLoggedIn = !!(await getCurrentSession());
 
   const header = (
     <header>
@@ -58,7 +55,7 @@ export default async function RootLayout({
           <span>Superior University Student Branch</span>
         </div>
         <div className="footerLinks">
-          <a href="/">Home</a>
+          <Link href="/">Home</Link>
           <a href="#verify">Verify</a>
           <a href="https://www.ieee.org" target="_blank" rel="noopener noreferrer">IEEE.org</a>
         </div>

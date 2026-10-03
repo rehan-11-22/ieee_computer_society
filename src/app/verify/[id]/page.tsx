@@ -2,7 +2,7 @@
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Certificate } from "@/lib/db";
+import type { Certificate } from "@/lib/types";
 
 export default function VerifyResult({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -65,13 +65,28 @@ export default function VerifyResult({ params }: { params: Promise<{ id: string 
               </div>
             )
           ) : (
-            <div className="resultHeader notfound">
-              <div className="resultIcon">✕</div>
-              <div>
-                <h2 style={{ color: "var(--red)" }}>Certificate Not Found</h2>
-                <p>The entered Credential ID is not valid or does not exist.</p>
+            <>
+              <div className="resultHeader notfound">
+                <div className="resultIcon">✕</div>
+                <div>
+                  <h2 style={{ color: "var(--red)" }}>Certificate Not Found</h2>
+                  <p>The entered Credential ID is not valid or does not exist.</p>
+                </div>
               </div>
-            </div>
+              <div className="resultNote notFoundHelp">
+                <div className="helpIcon">i</div>
+                <div>
+                  <strong>Please check the Credential ID and try again.</strong>
+                  <p>
+                    Make sure the complete ID is entered exactly as printed on the certificate.
+                    If you believe this is an error, contact IEEE CS Superior University Student Branch.
+                  </p>
+                  <button className="secondary" onClick={() => router.push("/#verify")}>
+                    Try Another Credential ID
+                  </button>
+                </div>
+              </div>
+            </>
           )}
         </div>
       </div>

@@ -6,15 +6,20 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed": "node scripts/seed-mongodb.mjs",
+    "migrate:supabase": "node scripts/migrate-supabase-to-mongodb.mjs"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.117.2",
+    "bcryptjs": "^3.0.3",
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^13.4.6",
+    "jose": "^6.2.12",
     "lucide-react": "^1.49.0",
+    "mongodb": "^7.7.0",
     "next": "16.3.8",
+    "pdf-lib": "^1.17.1",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },

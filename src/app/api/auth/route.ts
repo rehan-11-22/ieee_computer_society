@@ -1,61 +1,47 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+import { compare } from "bcryptjs";
+import { createSessionToken, SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from "@/lib/auth";
+import { findAdminByEmail, normalizeEmail } from "@/lib/users";
 
 export async function POST(req: Request) {
   try {
-    const { email, password, action } = await req.json();
+    const body = await req.json();
+    const email = typeof body.email === "string" ? normalizeEmail(body.email) : "";
+    const password = typeof body.password === "string" ? body.password : "";
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false }
-    });
-
-    if (action === "signup") {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-      if (error) {
-        return NextResponse.json({ error: error.message }, { status: 400 });
-      }
-      return NextResponse.json({ message: "Admin user created successfully", user: data.user }, { status: 201 });
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      return NextResponse.json({ error: "A valid email address is required" }, { status: 400 });
     }
 
-    // Login
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 401 });
+    if (!password) {
+      return NextResponse.json({ error: "Password is required" }, { status: 400 });
+    }
+
+    const user = await findAdminByEmail(email);
+    if (!user || !(await compare(password, user.passwordHash))) {
+      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
     const response = NextResponse.json({
       message: "Login successful",
-      user: { id: data.user.id, email: data.user.email },
+      user: { id: user._id.toHexString(), email: user.email },
     });
 
-    // Set JWT as httpOnly cookie for secure server-side auth
-    if (data.session) {
-      response.cookies.set("admin_token", data.session.access_token, {
+    response.cookies.set(
+      SESSION_COOKIE_NAME,
+      await createSessionToken({ userId: user._id.toHexString(), email: user.email }),
+      {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         path: "/",
-        maxAge: 60 * 60, // 1 hour
-      });
-
-      response.cookies.set("admin_refresh", data.session.refresh_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-      });
-    }
+        maxAge: SESSION_MAX_AGE_SECONDS,
+      },
+    );
 
     return response;
-  } catch (err: any) {
-    console.error("Auth error:", err);
-    return NextResponse.json({ error: err.message || "Server error" }, { status: 500 });
+  } catch (error) {
+    console.error("Authentication error:", error);
+    return NextResponse.json({ error: "Authentication service is unavailable" }, { status: 500 });
   }
 }

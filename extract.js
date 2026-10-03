@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const fs = require('fs');
 const html = fs.readFileSync('C:/Users/PC/Downloads/index.html', 'utf8');
 const styleMatch = html.match(/<style>([\s\S]*?)<\/style>/);
