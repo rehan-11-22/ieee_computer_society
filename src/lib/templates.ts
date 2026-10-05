@@ -2,7 +2,12 @@ import "server-only";
 
 import { Binary, ObjectId, type Collection, type WithId } from "mongodb";
 import { getDatabase } from "@/lib/mongodb";
-import type { CertificateTemplate } from "@/lib/types";
+import type { CertificateTemplate, CertificateTemplateLayout } from "@/lib/types";
+import {
+  cloneCertificateTemplateLayout,
+  DEFAULT_CERTIFICATE_TEMPLATE_LAYOUT,
+  legacyCertificateTemplateLayout,
+} from "@/lib/certificate-template-layout";
 
 export type TemplateMimeType = "image/png" | "image/jpeg";
 
@@ -12,6 +17,7 @@ interface CertificateTemplateDocument {
   size: number;
   data: Binary;
   isDefault: boolean;
+  layout?: CertificateTemplateLayout;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -42,6 +48,9 @@ function serializeTemplate(document: WithId<CertificateTemplateDocument>): Certi
     size: document.size,
     isDefault: document.isDefault,
     imageUrl: `/api/templates/${id}/image`,
+    layout: document.layout
+      ? cloneCertificateTemplateLayout(document.layout)
+      : legacyCertificateTemplateLayout(),
     createdAt: document.createdAt.toISOString(),
   };
 }
@@ -64,6 +73,7 @@ export async function createCertificateTemplate(input: {
   mimeType: TemplateMimeType;
   data: Uint8Array;
   setAsDefault: boolean;
+  layout?: CertificateTemplateLayout;
 }): Promise<CertificateTemplate> {
   const collection = await templateCollection();
   const now = new Date();
@@ -79,6 +89,7 @@ export async function createCertificateTemplate(input: {
     size: input.data.byteLength,
     data: new Binary(input.data),
     isDefault: shouldBeDefault,
+    layout: cloneCertificateTemplateLayout(input.layout || DEFAULT_CERTIFICATE_TEMPLATE_LAYOUT),
     createdAt: now,
     updatedAt: now,
   };
@@ -116,6 +127,26 @@ export async function setDefaultCertificateTemplate(id: string) {
   const document = await collection.findOneAndUpdate(
     { _id: objectId },
     { $set: { isDefault: true, updatedAt: now } },
+    { returnDocument: "after" },
+  );
+  return document ? serializeTemplate(document) : null;
+}
+
+export async function updateCertificateTemplateLayout(
+  id: string,
+  layout: CertificateTemplateLayout,
+) {
+  const objectId = templateObjectId(id);
+  if (!objectId) return null;
+  const collection = await templateCollection();
+  const document = await collection.findOneAndUpdate(
+    { _id: objectId },
+    {
+      $set: {
+        layout: cloneCertificateTemplateLayout(layout),
+        updatedAt: new Date(),
+      },
+    },
     { returnDocument: "after" },
   );
   return document ? serializeTemplate(document) : null;

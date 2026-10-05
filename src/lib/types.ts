@@ -4,12 +4,14 @@ export interface Certificate {
   verificationLink: string;
   recipientName: string;
   certificateType: string;
+  eventId?: string;
   eventName: string;
   issueDate: string;
   issuedBy: string;
   organization: string;
   status: "Valid" | "Revoked";
   templateId?: string;
+  templateLayout?: CertificateTemplateLayout;
 }
 
 export type CertificateDetails = Pick<
@@ -36,5 +38,50 @@ export interface CertificateTemplate {
   size: number;
   isDefault: boolean;
   imageUrl: string;
+  layout: CertificateTemplateLayout;
+  createdAt: string;
+}
+
+export type CertificateTemplateFieldKey =
+  | "certificateType"
+  | "presentedTo"
+  | "recipientName"
+  | "eventName"
+  | "organization"
+  | "credentialId"
+  | "issueDate"
+  | "issuedBy"
+  | "issuingOrganization";
+
+export interface CertificateTemplateFieldLayout {
+  x: number;
+  y: number;
+  width: number;
+  fontSize: number;
+  color: string;
+}
+
+export interface CertificateTemplateLayout {
+  showContentPanel: boolean;
+  fields: Record<CertificateTemplateFieldKey, CertificateTemplateFieldLayout>;
+}
+
+export interface SocietyEvent {
+  id: string;
+  title: string;
+  description: string;
+  eventDate: string;
+  location: string;
+  imageUrl?: string;
+  createdAt: string;
+}
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  role: string;
+  bio: string;
+  displayOrder: number;
+  imageUrl?: string;
   createdAt: string;
 }

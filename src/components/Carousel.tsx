@@ -1,11 +1,12 @@
 "use client";
-import React, { useState, useCallback, useEffect } from 'react';
-import useEmblaCarousel from 'embla-carousel-react';
-import Autoplay from 'embla-carousel-autoplay';
-import Image from 'next/image';
 
-const images = [
-  "/WhatsApp Image 2026-09-30 at 5.14.04 PM.jpeg",
+import { useCallback, useEffect, useState } from "react";
+import Autoplay from "embla-carousel-autoplay";
+import useEmblaCarousel from "embla-carousel-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import Image from "next/image";
+
+const galleryImages = [
   "/WhatsApp Image 2026-09-30 at 5.14.05 PM.jpeg",
   "/WhatsApp Image 2026-09-30 at 5.14.40 PM.jpeg",
   "/WhatsApp Image 2026-09-30 at 5.14.41 PM (1).jpeg",
@@ -13,59 +14,70 @@ const images = [
   "/WhatsApp Image 2026-09-30 at 5.14.41 PM.jpeg",
   "/WhatsApp Image 2026-09-30 at 5.15.16 PM.jpeg",
   "/WhatsApp Image 2026-09-30 at 5.15.17 PM.jpeg",
-  "/WhatsApp Image 2026-09-30 at 5.15.57 PM.jpeg"
+  "/WhatsApp Image 2026-09-30 at 5.15.57 PM.jpeg",
+  "/WhatsApp Image 2026-09-30 at 5.14.04 PM.jpeg",
 ];
 
-export function HeroCarousel() {
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 3500, stopOnInteraction: false })]);
+export function GalleryCarousel() {
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    { loop: true, align: "start", slidesToScroll: 1 },
+    [Autoplay({ delay: 3200, stopOnInteraction: false, stopOnMouseEnter: true })],
+  );
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const onSelect = useCallback(() => {
-    if (!emblaApi) return;
-    setSelectedIndex(emblaApi.selectedScrollSnap());
+    if (emblaApi) setSelectedIndex(emblaApi.selectedScrollSnap());
   }, [emblaApi]);
 
   useEffect(() => {
     if (!emblaApi) return;
-    emblaApi.on('select', onSelect);
+    emblaApi.on("select", onSelect);
     return () => {
-      emblaApi.off('select', onSelect);
+      emblaApi.off("select", onSelect);
     };
   }, [emblaApi, onSelect]);
 
-  const scrollTo = useCallback((index: number) => {
-    if (emblaApi) emblaApi.scrollTo(index);
-  }, [emblaApi]);
-
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <div className="embla" ref={emblaRef} style={{ height: '100%' }}>
-        <div className="embla__container" style={{ display: 'flex', height: '100%' }}>
-          {images.map((src, index) => (
-            <div className="embla__slide" key={index} style={{ flex: '0 0 100%', minWidth: 0, height: '100%', position: 'relative' }}>
-              <Image
-                src={src}
-                alt={`Event ${index + 1}`}
-                fill
-                priority={index === 0}
-                sizes="(max-width: 900px) 100vw, 50vw"
-                style={{ objectFit: 'cover' }}
-              />
+    <div className="galleryCarousel">
+      <div className="galleryViewport" ref={emblaRef}>
+        <div className="galleryTrack">
+          {galleryImages.map((src, index) => (
+            <div className="gallerySlide" key={src}>
+              <div className="galleryImage">
+                <Image
+                  src={src}
+                  alt={`IEEE CS Superior University activity ${index + 1}`}
+                  fill
+                  sizes="(max-width: 700px) 88vw, (max-width: 1050px) 45vw, 31vw"
+                  style={{ objectFit: "cover" }}
+                />
+                <span>{String(index + 1).padStart(2, "0")}</span>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Dots */}
-      <div className="carouselDots" style={{ position: 'absolute', bottom: '20px', right: '50%', transform: 'translateX(50%)', zIndex: 4, display: 'flex', gap: '8px' }}>
-        {images.map((_, index) => (
-          <button
-            key={index}
-            className={`carouselDot ${index === selectedIndex ? 'active' : ''}`}
-            onClick={() => scrollTo(index)}
-            aria-label={`Go to slide ${index + 1}`}
-          />
-        ))}
+      <div className="galleryControls">
+        <div className="galleryArrows">
+          <button type="button" onClick={() => emblaApi?.scrollPrev()} aria-label="Previous gallery image">
+            <ChevronLeft size={19} />
+          </button>
+          <button type="button" onClick={() => emblaApi?.scrollNext()} aria-label="Next gallery image">
+            <ChevronRight size={19} />
+          </button>
+        </div>
+        <div className="galleryDots" aria-label="Gallery navigation">
+          {galleryImages.map((_, index) => (
+            <button
+              type="button"
+              key={index}
+              className={index === selectedIndex ? "active" : ""}
+              onClick={() => emblaApi?.scrollTo(index)}
+              aria-label={`Go to gallery image ${index + 1}`}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

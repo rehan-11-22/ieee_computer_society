@@ -80,3 +80,13 @@ export function parseTemplateId(value: unknown): ParseResult<string | undefined>
   }
   return { ok: true, value: value.trim().toLowerCase() };
 }
+
+export function parseCertificateEventId(value: unknown): ParseResult<string | undefined> {
+  if (value === undefined || value === null || value === "") {
+    return { ok: true, value: undefined };
+  }
+  if (typeof value !== "string" || !/^[a-f\d]{24}$/i.test(value.trim())) {
+    return { ok: false, error: "Invalid certificate event" };
+  }
+  return { ok: true, value: value.trim().toLowerCase() };
+}

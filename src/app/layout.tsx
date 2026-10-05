@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
-import { DM_Sans, Playfair_Display } from "next/font/google";
+import { Playfair_Display, Poppins } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
+import Image from "next/image";
 import { getCurrentSession } from "@/lib/auth";
+import { Mail, MapPin } from "lucide-react";
+import { SiteHeader } from "@/components/SiteHeader";
 
-const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans" });
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-poppins",
+});
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
 
 export const metadata: Metadata = {
@@ -21,55 +28,43 @@ export default async function RootLayout({
 }>) {
   const isLoggedIn = !!(await getCurrentSession());
 
-  const header = (
-    <header>
-      <Link href="/" className="brand" style={{ textDecoration: "none" }}>
-        <div className="brandLogo">CS</div>
-        <div>
-          <strong>IEEE Computer Society</strong>
-          <span>Superior University Student Branch</span>
-        </div>
-      </Link>
-      <nav>
-        {isLoggedIn ? (
-          <Link href="/login">
-            <button>Dashboard</button>
-          </Link>
-        ) : (
-          <Link href="/login">
-            <button>Login</button>
-          </Link>
-        )}
-        <Link href="/#verify">
-          <button style={{ background: "var(--blue)", color: "white" }}>Verify</button>
-        </Link>
-      </nav>
-    </header>
-  );
+  const header = <SiteHeader isLoggedIn={isLoggedIn} />;
 
   const footer = (
-    <footer>
-      <div className="footerTop">
+    <footer className="siteFooter">
+      <div className="siteFooterMain">
         <div className="footerBrand">
-          <strong>IEEE Computer Society</strong>
-          <span>Superior University Student Branch</span>
+          <Link className="footerBrandLogo" href="/">
+            <Image src="/ieee-society-logo.jpg" alt="IEEE Society Superior University" width={210} height={99} />
+          </Link>
+          <p>Learn&nbsp; | &nbsp;Connect&nbsp; | &nbsp;Build the Future</p>
         </div>
-        <div className="footerLinks">
+        <div className="footerColumn">
+          <strong>Quick Links</strong>
           <Link href="/">Home</Link>
-          <a href="#verify">Verify</a>
-          <a href="https://www.ieee.org" target="_blank" rel="noopener noreferrer">IEEE.org</a>
+          <Link href="/about">About</Link>
+          <Link href="/events">Events</Link>
+          <Link href="/team">Our Team</Link>
+          <Link href="/contact">Contact</Link>
+          <Link href="/verify">Verification</Link>
         </div>
+        <div className="footerColumn footerContact">
+          <strong>Contact</strong>
+          <span><MapPin size={15} /> Superior University, Lahore</span>
+          <a href="mailto:ieeecs@superior.edu.pk"><Mail size={15} /> ieeecs@superior.edu.pk</a>
+        </div>
+        <a className="footerIeee" href="https://www.ieee.org" target="_blank" rel="noopener noreferrer">IEEE</a>
       </div>
       <div className="footerBottom">
         <span>© {new Date().getFullYear()} IEEE CS Superior University. All rights reserved.</span>
-        <span>Credential-based verification • Link Only</span>
+        <span>Privacy Policy&nbsp;&nbsp; | &nbsp;&nbsp;Terms &amp; Conditions</span>
       </div>
     </footer>
   );
 
   return (
     <html lang="en">
-      <body className={`${dmSans.variable} ${playfair.variable} antialiased`}>
+      <body className={`${poppins.variable} ${playfair.variable} antialiased`}>
         <ConditionalLayout header={header} footer={footer}>
           {children}
         </ConditionalLayout>

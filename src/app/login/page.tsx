@@ -1,9 +1,47 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { AdminAccount, Certificate, CertificateTemplate } from "@/lib/types";
+import type { AdminAccount, Certificate, CertificateTemplate, SocietyEvent } from "@/lib/types";
 import Link from "next/link";
 import Image from "next/image";
+import {
+  Award,
+  CalendarDays,
+  ExternalLink,
+  ImageIcon,
+  LayoutDashboard,
+  LogOut,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import { Toast, type ToastMessage } from "@/components/Toast";
+import { EventManager, TeamManager } from "@/components/AdminContentManagers";
+import { CertificateTemplateEditor } from "@/components/CertificateTemplateEditor";
+
+type AdminPanelName = "certificates" | "events" | "team" | "templates" | "admins";
+const CUSTOM_EVENT_VALUE = "__custom__";
+
+const panelCopy: Record<AdminPanelName, { title: string; description: string }> = {
+  certificates: {
+    title: "Certificate Records",
+    description: "Create, verify, update, and manage issued certificates.",
+  },
+  events: {
+    title: "Events Management",
+    description: "Publish events that appear instantly on the public website.",
+  },
+  team: {
+    title: "Team Management",
+    description: "Manage the members displayed on the Society and Team pages.",
+  },
+  templates: {
+    title: "Certificate Templates",
+    description: "Upload and select official certificate background designs.",
+  },
+  admins: {
+    title: "Admin Accounts",
+    description: "Control who can access and manage the administration portal.",
+  },
+};
 
 export default function AdminPage() {
   const [authState, setAuthState] = useState<"loading" | "login" | "authenticated">("loading");
@@ -12,7 +50,7 @@ export default function AdminPage() {
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [userEmail, setUserEmail] = useState("");
-  const [activePanel, setActivePanel] = useState<"certificates" | "templates" | "admins">("certificates");
+  const [activePanel, setActivePanel] = useState<AdminPanelName>("certificates");
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const toastId = useRef(0);
 
@@ -24,6 +62,8 @@ export default function AdminPage() {
   const [certificateLoading, setCertificateLoading] = useState(false);
   const [actionError, setActionError] = useState("");
   const [pendingDelete, setPendingDelete] = useState<Certificate | null>(null);
+  const [certificateEvents, setCertificateEvents] = useState<SocietyEvent[]>([]);
+  const [certificateEventsLoading, setCertificateEventsLoading] = useState(false);
 
   const [templates, setTemplates] = useState<CertificateTemplate[]>([]);
   const [templatesLoading, setTemplatesLoading] = useState(false);
@@ -31,6 +71,7 @@ export default function AdminPage() {
   const [templateFile, setTemplateFile] = useState<File | null>(null);
   const [templateAsDefault, setTemplateAsDefault] = useState(true);
   const [templateUploading, setTemplateUploading] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<CertificateTemplate | null>(null);
 
   const [admins, setAdmins] = useState<AdminAccount[]>([]);
   const [adminsLoading, setAdminsLoading] = useState(false);
@@ -44,6 +85,7 @@ export default function AdminPage() {
   const [fName, setFName] = useState("");
   const [fType, setFType] = useState("Certificate of Appreciation");
   const [fEvent, setFEvent] = useState("");
+  const [fEventSelection, setFEventSelection] = useState("");
   const [fDate, setFDate] = useState("");
   const [fIssuedBy, setFIssuedBy] = useState("President Ahmad Kashif");
   const [fOrg, setFOrg] = useState("IEEE Computer Society");
@@ -67,16 +109,19 @@ export default function AdminPage() {
         if (authResponse.ok) {
           const data = await authResponse.json();
           if (data.authenticated) {
-            const [certificateResponse, templateResponse] = await Promise.all([
+            const [certificateResponse, templateResponse, eventResponse] = await Promise.all([
               fetch("/api/certificates"),
               fetch("/api/templates"),
+              fetch("/api/events", { cache: "no-store" }),
             ]);
             const initialCertificates = certificateResponse.ok ? await certificateResponse.json() : [];
             const initialTemplates = templateResponse.ok ? await templateResponse.json() : [];
+            const initialEvents = eventResponse.ok ? await eventResponse.json() : [];
 
             if (!cancelled) {
               setCertificates(initialCertificates);
               setTemplates(initialTemplates);
+              setCertificateEvents(initialEvents);
               if (!certificateResponse.ok) {
                 setActionError("Certificates could not be loaded. Please refresh and try again.");
               }
@@ -110,6 +155,25 @@ export default function AdminPage() {
     const data = await res.json().catch(() => ({}));
     setActionError(data.error || "Certificates could not be loaded");
     return false;
+  }
+
+  async function loadCertificateEvents() {
+    setCertificateEventsLoading(true);
+    try {
+      const response = await fetch("/api/events", { cache: "no-store" });
+      const data = await response.json().catch(() => []);
+      if (!response.ok) {
+        showToast(data.error || "Events could not be loaded", "error");
+        return [] as SocietyEvent[];
+      }
+      setCertificateEvents(data);
+      return data as SocietyEvent[];
+    } catch {
+      showToast("Network error while loading events", "error");
+      return [] as SocietyEvent[];
+    } finally {
+      setCertificateEventsLoading(false);
+    }
   }
 
   async function loadAdmins() {
@@ -166,6 +230,7 @@ export default function AdminPage() {
     setFName("");
     setFType("Certificate of Appreciation");
     setFEvent("");
+    setFEventSelection("");
     setFDate("");
     setFIssuedBy("President Ahmad Kashif");
     setFOrg("IEEE Computer Society");
@@ -178,6 +243,9 @@ export default function AdminPage() {
   const openCreateModal = () => {
     resetCertificateForm();
     setShowModal(true);
+    void loadCertificateEvents().then((events) => {
+      if (events.length === 0) setFEventSelection(CUSTOM_EVENT_VALUE);
+    });
   };
 
   const openEditModal = (certificate: Certificate) => {
@@ -185,6 +253,7 @@ export default function AdminPage() {
     setFName(certificate.recipientName);
     setFType(certificate.certificateType);
     setFEvent(certificate.eventName);
+    setFEventSelection(certificate.eventId || CUSTOM_EVENT_VALUE);
     setFDate(certificate.issueDate);
     setFIssuedBy(certificate.issuedBy);
     setFOrg(certificate.organization);
@@ -192,6 +261,11 @@ export default function AdminPage() {
     setFTemplateId(certificate.templateId || "");
     setCertificateError("");
     setShowModal(true);
+    void loadCertificateEvents().then((events) => {
+      if (!certificate.eventId || !events.some((event) => event.id === certificate.eventId)) {
+        setFEventSelection(CUSTOM_EVENT_VALUE);
+      }
+    });
   };
 
   const closeCertificateModal = () => {
@@ -219,7 +293,7 @@ export default function AdminPage() {
         return;
       }
 
-      await Promise.all([loadCertificates(), loadTemplates()]);
+      await Promise.all([loadCertificates(), loadTemplates(), loadCertificateEvents()]);
       setUserEmail(data.user.email);
       setAuthState("authenticated");
     } catch {
@@ -331,11 +405,20 @@ export default function AdminPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setCertificateError("");
+
+    if (!fEventSelection) {
+      const message = "Select an event or choose Custom / Historical Event";
+      setCertificateError(message);
+      showToast(message, "error");
+      return;
+    }
+
     setCertificateLoading(true);
 
     const certificateDetails = {
       recipientName: fName,
       certificateType: fType,
+      eventId: fEventSelection === CUSTOM_EVENT_VALUE ? null : fEventSelection,
       eventName: fEvent,
       issueDate: fDate,
       issuedBy: fIssuedBy,
@@ -429,14 +512,17 @@ export default function AdminPage() {
     c.recipientName.toLowerCase().includes(search.toLowerCase()) ||
     c.credentialId.toLowerCase().includes(search.toLowerCase())
   );
+  const selectedCertificateEvent = certificateEvents.find((event) => event.id === fEventSelection);
 
   // Loading state
   if (authState === "loading") {
     return (
-      <div className="loginWrap">
-        <div className="loginCard">
-          <div style={{ fontSize: "32px", marginBottom: "15px" }}>⏳</div>
+      <div className="loginWrap adminLoginPage">
+        <Link className="loginHomeLink" href="/">← Back to website</Link>
+        <div className="loginCard adminLoginCard">
+          <Image className="loginBrandImage" src="/ieee-society-logo.jpg" alt="IEEE Society Superior University" width={210} height={99} priority />
           <h2>Checking Authentication...</h2>
+          <p>Please wait while we securely check your admin session.</p>
         </div>
       </div>
     );
@@ -445,46 +531,51 @@ export default function AdminPage() {
   // Login
   if (authState === "login") {
     return (
-      <div className="loginWrap">
-        <div className="loginCard">
-          <div style={{ width: "56px", height: "56px", borderRadius: "16px", background: "var(--navy)", color: "white", display: "grid", placeItems: "center", margin: "0 auto 15px", fontSize: "20px", fontWeight: 800 }}>🔐</div>
+      <div className="loginWrap adminLoginPage">
+        <Link className="loginHomeLink" href="/">← Back to website</Link>
+        <div className="loginCard adminLoginCard">
+          <Link className="adminLoginBrand" href="/">
+            <Image className="loginBrandImage" src="/ieee-society-logo.jpg" alt="IEEE Society Superior University" width={238} height={112} priority />
+          </Link>
           <div className="eyebrow">Restricted Area</div>
           <h2>Admin Login</h2>
-          <p>Sign in to manage certificates and admin accounts.</p>
+          <p>Sign in to manage certificates, public events, team members, and admin accounts.</p>
 
           {authError && (
-            <div style={{ background: "#fee2e2", color: "#b91c1c", padding: "10px 14px", borderRadius: "10px", fontSize: "13px", marginTop: "15px", textAlign: "left" }}>
+            <div className="loginError" role="alert">
               {authError}
             </div>
           )}
 
-          <form onSubmit={handleAuth}>
+          <form className="adminLoginForm" onSubmit={handleAuth}>
+            <label htmlFor="login-email">Email address</label>
             <input
+              id="login-email"
               type="email"
               placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              style={{ width: "100%", padding: "14px", margin: "15px 0 0", border: "1px solid #d7e0eb", borderRadius: "10px", outline: "none" }}
             />
+            <label htmlFor="login-password">Password</label>
             <input
+              id="login-password"
               type="password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              style={{ width: "100%", padding: "14px", margin: "10px 0", border: "1px solid #d7e0eb", borderRadius: "10px", outline: "none" }}
             />
             <button
               className="primary"
               type="submit"
               disabled={authLoading}
-              style={{ width: "100%", opacity: authLoading ? 0.7 : 1 }}
             >
               {authLoading ? "Please wait..." : "Sign In →"}
             </button>
           </form>
+          <p className="loginWebsiteNote">Public website access remains available without signing in.</p>
         </div>
       </div>
     );
@@ -492,57 +583,58 @@ export default function AdminPage() {
 
   // Authenticated - Admin Panel
   return (
-    <div className="page active" style={{ display: "block" }}>
-      <div className="adminPanel">
-        <div className="adminTop">
-          <div>
-            <div className="eyebrow">Administration</div>
-            <h2>
-              {activePanel === "certificates"
-                ? "Certificate Records"
-                : activePanel === "templates"
-                  ? "Certificate Templates"
-                  : "Admin Accounts"}
-            </h2>
-            <p>Logged in as <strong>{userEmail}</strong></p>
+    <div className="adminShell">
+      <aside className="adminSidebar">
+        <Link className="adminSidebarBrand" href="/">
+          <Image className="adminSidebarBrandImage" src="/ieee-society-logo.jpg" alt="IEEE Society Superior University" width={218} height={103} priority />
+        </Link>
+
+        <div className="adminSidebarPortal"><LayoutDashboard size={16} /><span>Administration Portal</span></div>
+        <span className="adminSidebarLabel">Management</span>
+        <nav className="adminSidebarNav" aria-label="Admin dashboard sections">
+          <button type="button" className={activePanel === "certificates" ? "active" : ""} onClick={() => setActivePanel("certificates")}>
+            <Award size={18} /><span>Certificates</span>
+          </button>
+          <button type="button" className={activePanel === "events" ? "active" : ""} onClick={() => setActivePanel("events")}>
+            <CalendarDays size={18} /><span>Events</span>
+          </button>
+          <button type="button" className={activePanel === "team" ? "active" : ""} onClick={() => setActivePanel("team")}>
+            <Users size={18} /><span>Team</span>
+          </button>
+          <button type="button" className={activePanel === "templates" ? "active" : ""} onClick={() => void openTemplatesPanel()}>
+            <ImageIcon size={18} /><span>Templates</span>
+          </button>
+          <button type="button" className={activePanel === "admins" ? "active" : ""} onClick={() => void openAdminsPanel()}>
+            <ShieldCheck size={18} /><span>Admins</span>
+          </button>
+        </nav>
+
+        <div className="adminSidebarFooter">
+          <div className="adminSignedIn">
+            <span>{userEmail.charAt(0).toUpperCase()}</span>
+            <div><small>Signed in as</small><strong>{userEmail}</strong></div>
           </div>
-          <div style={{ display: "flex", gap: "10px" }}>
+          <Link className="adminWebsiteLink" href="/"><ExternalLink size={17} /> View Public Website</Link>
+          <button className="adminLogoutButton" type="button" onClick={handleLogout}><LogOut size={17} /> Log out</button>
+        </div>
+      </aside>
+
+      <section className="adminWorkspace">
+        <div className="adminWorkspaceTop">
+          <div>
+            <span className="adminBreadcrumb">Dashboard / {panelCopy[activePanel].title}</span>
+            <h1>{panelCopy[activePanel].title}</h1>
+            <p>{panelCopy[activePanel].description}</p>
+          </div>
+          <div className="adminTopActions">
+            <Link className="adminMobileWebsiteLink" href="/"><ExternalLink size={17} /> Website</Link>
             {activePanel === "certificates" && (
-              <button className="primary" onClick={openCreateModal}>+ Add Certificate</button>
+              <button className="primary" type="button" onClick={openCreateModal}>+ Add Certificate</button>
             )}
-            <button className="secondary" onClick={handleLogout}>Logout</button>
           </div>
         </div>
 
-        <div className="adminTabs" role="tablist" aria-label="Admin dashboard sections">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activePanel === "certificates"}
-            className={activePanel === "certificates" ? "active" : ""}
-            onClick={() => setActivePanel("certificates")}
-          >
-            Certificates
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activePanel === "templates"}
-            className={activePanel === "templates" ? "active" : ""}
-            onClick={() => void openTemplatesPanel()}
-          >
-            Templates
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activePanel === "admins"}
-            className={activePanel === "admins" ? "active" : ""}
-            onClick={() => void openAdminsPanel()}
-          >
-            Admins
-          </button>
-        </div>
+        <div className="adminWorkspaceBody">
 
         {actionError && (
           <div className="adminError" role="alert">{actionError}</div>
@@ -638,8 +730,8 @@ export default function AdminPage() {
               <div className="eyebrow">Design Upload</div>
               <h3>Add Certificate Template</h3>
               <p>
-                Upload a landscape PNG or JPEG background. The system places recipient details,
-                Credential ID, verification link, and signatures on top and generates the PDF.
+                Upload a clean landscape PNG or JPEG background, then use the layout editor to
+                position every dynamic certificate field for web preview and PDF output.
               </p>
               <form className="templateForm" onSubmit={handleTemplateUpload}>
                 <label htmlFor="template-name">Template name</label>
@@ -708,9 +800,10 @@ export default function AdminPage() {
                             {template.mimeType === "image/png" ? "PNG" : "JPEG"} · {(template.size / 1024 / 1024).toFixed(2)} MB
                           </span>
                         </div>
-                        {template.isDefault ? (
-                          <span className="defaultTemplateBadge">Default</span>
-                        ) : (
+                        <div className="templateCardActions">
+                          {template.isDefault ? (
+                            <span className="defaultTemplateBadge">Default</span>
+                          ) : (
                           <button
                             type="button"
                             className="tableAction"
@@ -718,7 +811,15 @@ export default function AdminPage() {
                           >
                             Set Default
                           </button>
-                        )}
+                          )}
+                          <button
+                            type="button"
+                            className="tableAction templateEditLayoutButton"
+                            onClick={() => setEditingTemplate(template)}
+                          >
+                            Edit Layout
+                          </button>
+                        </div>
                       </div>
                     </article>
                   ))}
@@ -726,7 +827,7 @@ export default function AdminPage() {
               )}
             </section>
           </div>
-        ) : (
+        ) : activePanel === "admins" ? (
           <div className="adminManagement">
             <section className="adminCreateCard">
               <div className="eyebrow">Authorized Access</div>
@@ -799,17 +900,27 @@ export default function AdminPage() {
               )}
             </section>
           </div>
+        ) : activePanel === "events" ? (
+          <EventManager notify={showToast} onUnauthorized={() => setAuthState("login")} />
+        ) : (
+          <TeamManager notify={showToast} onUnauthorized={() => setAuthState("login")} />
         )}
-      </div>
+        </div>
+      </section>
 
       <Toast toast={toast} onClose={closeToast} />
 
       {showModal && (
-        <div className="modal">
-          <div className="modalBox">
-            <button className="close" onClick={closeCertificateModal} aria-label="Close">×</button>
+        <div className="modal" role="presentation">
+          <div
+            className="modalBox certificateModalBox"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="certificate-modal-title"
+          >
+            <button className="close" type="button" onClick={closeCertificateModal} aria-label="Close certificate form">×</button>
             <div className="eyebrow">Certificate Record</div>
-            <h2 style={{ color: "var(--navy)", marginBottom: "20px" }}>
+            <h2 id="certificate-modal-title" className="certificateModalTitle">
               {editingCredentialId ? "Edit Certificate" : "Add Certificate"}
             </h2>
 
@@ -825,7 +936,46 @@ export default function AdminPage() {
                 <option>Certificate of Achievement</option>
                 <option>Certificate of Completion</option>
               </select>
-              <input placeholder="Event Name" required value={fEvent} onChange={e => setFEvent(e.target.value)} />
+              <select
+                className="full"
+                required
+                aria-label="Certificate event"
+                value={fEventSelection}
+                disabled={certificateEventsLoading}
+                onChange={(event) => {
+                  const selection = event.target.value;
+                  setFEventSelection(selection);
+                  if (selection === CUSTOM_EVENT_VALUE) {
+                    if (!editingCredentialId) setFEvent("");
+                  } else {
+                    const selected = certificateEvents.find((item) => item.id === selection);
+                    setFEvent(selected?.title || "");
+                  }
+                }}
+              >
+                <option value="" disabled>
+                  {certificateEventsLoading
+                    ? "Loading events..."
+                    : certificateEvents.length > 0
+                      ? "Select an event"
+                      : "No events have been created yet"}
+                </option>
+                {certificateEvents.map((event) => (
+                  <option value={event.id} key={event.id}>
+                    {event.title} — {event.eventDate}{event.location ? ` — ${event.location}` : ""}
+                  </option>
+                ))}
+                <option value={CUSTOM_EVENT_VALUE}>Custom / Historical Event</option>
+              </select>
+              {selectedCertificateEvent && (
+                <span className="selectedEventSummary full">
+                  Selected: <strong>{selectedCertificateEvent.title}</strong> · {selectedCertificateEvent.eventDate}
+                  {selectedCertificateEvent.location ? ` · ${selectedCertificateEvent.location}` : ""}
+                </span>
+              )}
+              {fEventSelection === CUSTOM_EVENT_VALUE && (
+                <input className="full" placeholder="Custom Event Name" required value={fEvent} onChange={e => setFEvent(e.target.value)} />
+              )}
               <input type="date" required value={fDate} onChange={e => setFDate(e.target.value)} />
               <input placeholder="Issued By" required value={fIssuedBy} onChange={e => setFIssuedBy(e.target.value)} />
               <input placeholder="Issuing Organization" required value={fOrg} onChange={e => setFOrg(e.target.value)} />
@@ -889,6 +1039,18 @@ export default function AdminPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {editingTemplate && (
+        <CertificateTemplateEditor
+          template={editingTemplate}
+          notify={showToast}
+          onClose={() => setEditingTemplate(null)}
+          onSaved={(updatedTemplate) => {
+            setTemplates((current) => current.map((item) => item.id === updatedTemplate.id ? updatedTemplate : item));
+            setEditingTemplate(null);
+          }}
+        />
       )}
     </div>
   );

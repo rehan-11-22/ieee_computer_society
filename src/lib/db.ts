@@ -2,7 +2,7 @@ import "server-only";
 
 import type { Collection, WithId } from "mongodb";
 import { getDatabase } from "@/lib/mongodb";
-import type { Certificate, CertificateDetails } from "@/lib/types";
+import type { Certificate, CertificateDetails, CertificateTemplateLayout } from "@/lib/types";
 
 interface CertificateDocument extends Omit<Certificate, "id"> {
   createdAt: Date;
@@ -18,6 +18,8 @@ interface CounterDocument {
 export interface CreateCertificateData extends CertificateDetails {
   credentialId?: string;
   templateId?: string;
+  templateLayout?: CertificateTemplateLayout;
+  eventId?: string;
 }
 
 let certificateSetupPromise: Promise<void> | undefined;
@@ -59,12 +61,14 @@ function serializeCertificate(document: WithId<CertificateDocument>): Certificat
     verificationLink: document.verificationLink || verificationLinkFor(document.credentialId),
     recipientName: document.recipientName,
     certificateType: document.certificateType,
+    eventId: document.eventId,
     eventName: document.eventName,
     issueDate: document.issueDate,
     issuedBy: document.issuedBy,
     organization: document.organization,
     status: document.status,
     templateId: document.templateId,
+    templateLayout: document.templateLayout,
   };
 }
 
@@ -137,12 +141,14 @@ export async function createCertificate(data: CreateCertificateData): Promise<Ce
     verificationLink: verificationLinkFor(credentialId),
     recipientName: data.recipientName,
     certificateType: data.certificateType,
+    ...(data.eventId ? { eventId: data.eventId } : {}),
     eventName: data.eventName,
     issueDate: data.issueDate,
     issuedBy: data.issuedBy,
     organization: data.organization,
     status: "Valid",
     ...(data.templateId ? { templateId: data.templateId } : {}),
+    ...(data.templateLayout ? { templateLayout: data.templateLayout } : {}),
     createdAt: now,
     updatedAt: now,
   };
@@ -154,6 +160,8 @@ export async function updateCertificate(
   credentialId: string,
   details: CertificateDetails,
   templateId?: string,
+  eventId?: string,
+  templateLayout?: CertificateTemplateLayout,
 ): Promise<Certificate | null> {
   const collection = await certificateCollection();
   const document = await collection.findOneAndUpdate(
@@ -162,9 +170,19 @@ export async function updateCertificate(
       $set: {
         ...details,
         ...(templateId ? { templateId } : {}),
+        ...(templateLayout ? { templateLayout } : {}),
+        ...(eventId ? { eventId } : {}),
         updatedAt: new Date(),
       },
-      ...(!templateId ? { $unset: { templateId: "" } } : {}),
+      ...(!templateId || !eventId
+        ? {
+            $unset: {
+              ...(!templateId ? { templateId: "" } : {}),
+              ...(!templateId ? { templateLayout: "" } : {}),
+              ...(!eventId ? { eventId: "" } : {}),
+            },
+          }
+        : {}),
     },
     { returnDocument: "after" },
   );

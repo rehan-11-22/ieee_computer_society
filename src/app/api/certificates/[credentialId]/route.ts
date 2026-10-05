@@ -1,14 +1,19 @@
 import { NextResponse } from "next/server";
 import { deleteCertificate, getCertificateById, updateCertificate, updateCertificateStatus } from "@/lib/db";
 import { getCurrentSession } from "@/lib/auth";
-import { parseCertificateDetails, parseTemplateId } from "@/lib/certificate-input";
-import { certificateTemplateExists } from "@/lib/templates";
+import { parseCertificateDetails, parseCertificateEventId, parseTemplateId } from "@/lib/certificate-input";
+import { getCertificateTemplate } from "@/lib/templates";
+import { getEventById } from "@/lib/content";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ credentialId: string }> }) {
   try {
     const resolvedParams = await params;
     const cert = await getCertificateById(resolvedParams.credentialId);
     if (!cert) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (cert.templateId && !cert.templateLayout) {
+      const template = await getCertificateTemplate(cert.templateId);
+      return NextResponse.json({ ...cert, templateLayout: template?.layout });
+    }
     return NextResponse.json(cert);
   } catch (error) {
     console.error("Certificate lookup error:", error);
@@ -23,7 +28,22 @@ export async function PUT(req: Request, { params }: { params: Promise<{ credenti
     }
 
     const body: unknown = await req.json();
-    const details = parseCertificateDetails(body);
+    const rawEventId = typeof body === "object" && body !== null
+      ? (body as Record<string, unknown>).eventId
+      : undefined;
+    const eventId = parseCertificateEventId(rawEventId);
+    if (!eventId.ok) {
+      return NextResponse.json({ error: eventId.error }, { status: 400 });
+    }
+    const selectedEvent = eventId.value ? await getEventById(eventId.value) : null;
+    if (eventId.value && !selectedEvent) {
+      return NextResponse.json({ error: "Selected event no longer exists. Refresh the form and choose another event." }, { status: 400 });
+    }
+    const details = parseCertificateDetails(
+      selectedEvent && typeof body === "object" && body !== null
+        ? { ...(body as Record<string, unknown>), eventName: selectedEvent.title }
+        : body,
+    );
     if (!details.ok) {
       return NextResponse.json({ error: details.error }, { status: 400 });
     }
@@ -35,15 +55,20 @@ export async function PUT(req: Request, { params }: { params: Promise<{ credenti
     if (!templateId.ok) {
       return NextResponse.json({ error: templateId.error }, { status: 400 });
     }
-    if (templateId.value && !(await certificateTemplateExists(templateId.value))) {
+    const selectedTemplate = templateId.value
+      ? await getCertificateTemplate(templateId.value)
+      : null;
+    if (templateId.value && !selectedTemplate) {
       return NextResponse.json({ error: "Certificate template was not found" }, { status: 400 });
     }
 
     const resolvedParams = await params;
     const certificate = await updateCertificate(
       resolvedParams.credentialId,
-      details.value,
+      selectedEvent ? { ...details.value, eventName: selectedEvent.title } : details.value,
       templateId.value,
+      selectedEvent?.id,
+      selectedTemplate?.layout,
     );
     if (!certificate) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json(certificate);
