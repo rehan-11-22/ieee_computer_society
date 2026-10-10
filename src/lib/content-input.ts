@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { ContentImageMimeType, EventInput, TeamMemberInput } from "@/lib/content";
+import type { EventPageSection } from "@/lib/types";
 
 const MAX_IMAGE_SIZE = 4 * 1024 * 1024;
 const IMAGE_TYPES = new Set<ContentImageMimeType>(["image/png", "image/jpeg", "image/webp"]);
@@ -16,7 +17,48 @@ function text(form: FormData, name: string, label: string, maxLength: number, re
   return { ok: true, value: normalized };
 }
 
-async function image(form: FormData): Promise<ParseResult<EventInput["image"]>> {
+function pageSections(form: FormData): ParseResult<EventPageSection[]> {
+  const value = form.get("pageSections");
+  if (typeof value !== "string" || !value.trim()) return { ok: true, value: [] };
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    return { ok: false, error: "Page sections must be valid JSON" };
+  }
+  if (!Array.isArray(parsed) || parsed.length > 12) return { ok: false, error: "Page sections are invalid" };
+  const sections: EventPageSection[] = [];
+  for (const item of parsed) {
+    if (!item || typeof item !== "object") return { ok: false, error: "Page sections are invalid" };
+    const section = item as Record<string, unknown>;
+    const id = typeof section.id === "string" && section.id.length <= 80 ? section.id : `section-${sections.length + 1}`;
+    if (section.type === "content") {
+      const heading = typeof section.heading === "string" ? section.heading.trim() : "";
+      const subheading = typeof section.subheading === "string" ? section.subheading.trim() : "";
+      const body = typeof section.body === "string" ? section.body.trim() : "";
+      const align = section.align === "center" ? "center" : "left";
+      const headingColor = color(section.headingColor, "#0f2f57");
+      const subheadingColor = color(section.subheadingColor, "#2563eb");
+      const bodyColor = color(section.bodyColor, "#64748b");
+      if (heading.length > 140 || subheading.length > 180 || body.length > 1200) return { ok: false, error: "Content block is too long" };
+      sections.push({ id, type: "content", heading, subheading, body, align, headingColor, subheadingColor, bodyColor });
+    } else if (section.type === "gallery") {
+      const heading = typeof section.heading === "string" ? section.heading.trim() : "Event Gallery";
+      const layout = section.layout === "carousel" ? "carousel" : "grid";
+      if (heading.length > 140) return { ok: false, error: "Gallery heading is too long" };
+      sections.push({ id, type: "gallery", heading, layout });
+    } else {
+      return { ok: false, error: "Page section type is invalid" };
+    }
+  }
+  return { ok: true, value: sections };
+}
+
+function color(value: unknown, fallback: string) {
+  return typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value) ? value : fallback;
+}
+
+export async function parseImage(form: FormData): Promise<ParseResult<EventInput["image"]>> {
   const value = form.get("image");
   if (!(value instanceof File) || value.size === 0) return { ok: true, value: undefined };
   if (!IMAGE_TYPES.has(value.type as ContentImageMimeType)) {
@@ -26,38 +68,23 @@ async function image(form: FormData): Promise<ParseResult<EventInput["image"]>> 
   return { ok: true, value: { data: new Uint8Array(await value.arrayBuffer()), mimeType: value.type as ContentImageMimeType } };
 }
 
-export async function parseImage(form: FormData): Promise<ParseResult<EventInput["image"]>> {
-  return image(form);
-}
-
 export async function parseEventForm(form: FormData): Promise<ParseResult<EventInput>> {
   const title = text(form, "title", "Title", 120);
   const description = text(form, "description", "Description", 500);
   const eventDate = text(form, "eventDate", "Event date", 10);
-  const section = text(form, "section", "Event section", 10);
   const location = text(form, "location", "Location", 140, false);
-  const rawPageSections = form.get("pageSections");
-  const uploadedImage = await image(form);
+  const sections = pageSections(form);
+  const uploadedImage = await parseImage(form);
   if (!title.ok) return title;
   if (!description.ok) return description;
   if (!eventDate.ok) return eventDate;
-  if (!section.ok || !["upcoming", "latest", "previous"].includes(section.value)) return { ok: false, error: "Event section is invalid" };
   if (!location.ok) return location;
+  if (!sections.ok) return sections;
   if (!uploadedImage.ok) return uploadedImage;
-  let pageSections: EventInput["pageSections"] = [];
-  if (typeof rawPageSections === "string" && rawPageSections.trim()) {
-    try {
-      const parsed = JSON.parse(rawPageSections);
-      if (!Array.isArray(parsed) || parsed.length > 20) throw new Error("invalid");
-      pageSections = parsed;
-    } catch {
-      return { ok: false, error: "Event page sections are invalid" };
-    }
-  }
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(eventDate.value) || Number.isNaN(new Date(`${eventDate.value}T00:00:00Z`).getTime())) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(eventDate.value) || Number.isNaN(new Date(`${eventDate.value}T00:00:00Z`).getTime())) {
     return { ok: false, error: "Event date must be a valid date" };
   }
-  return { ok: true, value: { title: title.value, description: description.value, eventDate: eventDate.value, location: location.value, section: section.value as "upcoming" | "latest" | "previous", pageSections, image: uploadedImage.value } };
+  return { ok: true, value: { title: title.value, description: description.value, eventDate: eventDate.value, location: location.value, pageSections: sections.value, image: uploadedImage.value } };
 }
 
 export async function parseTeamMemberForm(form: FormData): Promise<ParseResult<TeamMemberInput>> {
@@ -65,7 +92,7 @@ export async function parseTeamMemberForm(form: FormData): Promise<ParseResult<T
   const role = text(form, "role", "Role", 100);
   const bio = text(form, "bio", "Bio", 400, false);
   const rawOrder = text(form, "displayOrder", "Display order", 4);
-  const uploadedImage = await image(form);
+  const uploadedImage = await parseImage(form);
   if (!name.ok) return name;
   if (!role.ok) return role;
   if (!bio.ok) return bio;

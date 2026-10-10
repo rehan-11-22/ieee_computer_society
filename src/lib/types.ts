@@ -66,15 +66,12 @@ export interface CertificateTemplateLayout {
   fields: Record<CertificateTemplateFieldKey, CertificateTemplateFieldLayout>;
 }
 
-export type EventSection = "upcoming" | "latest" | "previous";
-
 export interface SocietyEvent {
   id: string;
   title: string;
   description: string;
   eventDate: string;
   location: string;
-  section: EventSection;
   imageUrl?: string;
   pageSections: EventPageSection[];
   createdAt: string;
