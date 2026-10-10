@@ -25,16 +25,12 @@ export function SiteHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
       <Link href="/" className="brand" onClick={closeMobileMenu}>
         <Image
           className="siteBrandMark"
-          src="/icon.png"
-          alt="IEEE Society emblem"
-          width={52}
-          height={52}
+          src="/images/ieee-neural-mark.png"
+          alt="IEEE Society Superior University"
+          width={310}
+          height={110}
           priority
         />
-        <span className="siteBrandText">
-          <strong>IEEE Society</strong>
-          <span>Superior University</span>
-        </span>
       </Link>
 
       <button

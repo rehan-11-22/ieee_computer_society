@@ -571,7 +571,7 @@ export default function AdminPage() {
       <div className="loginWrap adminLoginPage">
         <Link className="loginHomeLink" href="/">← Back to website</Link>
         <div className="loginCard adminLoginCard">
-          <Image className="loginBrandImage" src="/ieee-society-logo.jpg" alt="IEEE Society Superior University" width={210} height={99} priority />
+          <Image className="loginBrandImage" src="/images/ieee-neural-mark.png" alt="IEEE Society Superior University" width={210} height={99} priority />
           <h2>Checking Authentication...</h2>
           <p>Please wait while we securely check your admin session.</p>
         </div>
@@ -586,7 +586,7 @@ export default function AdminPage() {
         <Link className="loginHomeLink" href="/">← Back to website</Link>
         <div className="loginCard adminLoginCard">
           <Link className="adminLoginBrand" href="/">
-            <Image className="loginBrandImage" src="/ieee-society-logo.jpg" alt="IEEE Society Superior University" width={238} height={112} priority />
+            <Image className="loginBrandImage" src="/images/ieee-neural-mark.png" alt="IEEE Society Superior University" width={238} height={112} priority />
           </Link>
           <div className="eyebrow">Restricted Area</div>
           <h2>Admin Login</h2>
@@ -637,7 +637,7 @@ export default function AdminPage() {
     <div className="adminShell">
       <aside className="adminSidebar">
         <Link className="adminSidebarBrand" href="/">
-          <Image className="adminSidebarBrandImage" src="/ieee-society-logo.jpg" alt="IEEE Society Superior University" width={218} height={103} priority />
+          <Image className="adminSidebarBrandImage" src="/images/ieee-neural-mark.png" alt="IEEE Society Superior University" width={218} height={103} priority />
         </Link>
 
         <div className="adminSidebarPortal"><LayoutDashboard size={16} /><span>Administration Portal</span></div>
