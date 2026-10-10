@@ -30,8 +30,9 @@ export default async function EventsPage() {
         <div className="eventSectionStack innerContainer">
           {(["upcoming", "latest", "previous"] as const).map((section) => {
             const sectionEvents = events.filter((event) => event.section === section);
+            if (!sectionEvents.length) return null;
             const labels = { upcoming: "Upcoming Events", latest: "Latest Events", previous: "Previous Events" };
-            return <section className="eventPublicSection" key={section}><div className="eventPublicSectionHead"><h2>{labels[section]}</h2><span>{sectionEvents.length}</span></div>{sectionEvents.length === 0 ? <p className="publicSectionEmpty">No events in this section yet.</p> : <div className="eventsGrid">
+            return <section className="eventPublicSection" key={section}><div className="eventPublicSectionHead"><h2>{labels[section]}</h2><span>{sectionEvents.length}</span></div><div className="eventsGrid">
           {sectionEvents.map((event: SocietyEvent) => (
             <article key={event.id}>
               <div className="eventGridImage">
@@ -49,8 +50,7 @@ export default async function EventsPage() {
               </section>
             </article>
           ))}
-            </div>}
-            </section>;
+            </div></section>;
           })}
         </div>
       )}
