@@ -98,25 +98,30 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      <section className="leadershipSection innerContainer" id="leadership">
-        <div className="sectionTitleRow">
-          <div><span className="sectionPill">Our Leadership</span><h2>Executive Body 2026</h2></div>
-          <Link href="/team">View All Members <ArrowRight size={15} /></Link>
+      <section className="leadershipSection innerContainer" id="leadership" style={{ marginTop: '55px' }}>
+        <span className="sectionPill" style={{ display: 'inline-block', marginBottom: '15px' }}>Our Leadership</span>
+        <div className="customLeaderGrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+          <article className="leaderCard customLeaderCard" style={{ display: 'flex', alignItems: 'center', gap: '20px', padding: '20px', textAlign: 'left', background: '#f5f8fc', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+            <span style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#eaf2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb', flexShrink: 0 }}>
+              <UsersRound size={28} />
+            </span>
+            <div>
+              <h3 style={{ fontSize: '18px', color: '#102c50', marginBottom: '4px' }}>Dr. Hamayun Khan</h3>
+              <p style={{ color: '#68778c', fontSize: '13px', margin: 0 }}>Faculty Advisor</p>
+              <p style={{ color: '#68778c', fontSize: '13px', margin: 0 }}>Advisor Since 2021</p>
+            </div>
+          </article>
+          <article className="leaderCard customLeaderCard" style={{ display: 'flex', alignItems: 'center', gap: '20px', padding: '20px', textAlign: 'left', background: '#f5f8fc', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+            <span style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#eaf2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb', flexShrink: 0 }}>
+              <UsersRound size={28} />
+            </span>
+            <div>
+              <h3 style={{ fontSize: '18px', color: '#102c50', marginBottom: '4px' }}>M. Ahmad Kashif</h3>
+              <p style={{ color: '#68778c', fontSize: '13px', margin: 0 }}>Current President</p>
+              <p style={{ color: '#68778c', fontSize: '13px', margin: 0 }}>Leading Since 2025</p>
+            </div>
+          </article>
         </div>
-        {featuredLeaders.length === 0 ? (
-          <div className="inlineComingSoon"><Sparkles size={25} /><div><strong>Team announcement coming soon</strong><span>New members will appear here after they are added by an admin.</span></div></div>
-        ) : (
-          <div className="leaderGrid">
-            {featuredLeaders.map((member) => (
-              <article className="leaderCard" key={member.id}>
-                <span className={member.imageUrl ? "hasImage" : ""}>
-                  {member.imageUrl ? <Image src={member.imageUrl} alt={member.name} fill unoptimized loading="lazy" sizes="70px" style={{ objectFit: "cover", objectPosition: "center top" }} /> : member.name.slice(0, 2).toUpperCase()}
-                </span>
-                <h3>{member.name}</h3><p>{member.role}</p>
-              </article>
-            ))}
-          </div>
-        )}
       </section>
 
       <section className="societyImpact">
@@ -132,7 +137,7 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      <section className="societyEvents innerContainer" id="events">
+      {/* <section className="societyEvents innerContainer" id="events">
         <div className="sectionTitleRow">
           <div><span className="sectionPill">Latest Activities</span><h2>Learning in Action</h2></div>
           <Link href="/events">View All Events <ArrowRight size={15} /></Link>
@@ -149,7 +154,7 @@ export default async function AboutPage() {
             ))}
           </div>
         )}
-      </section>
+      </section> */}
     </main>
   );
 }

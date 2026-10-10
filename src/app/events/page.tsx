@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { CalendarDays, MapPin, Sparkles } from "lucide-react";
 import { listEvents } from "@/lib/content";
 
@@ -28,21 +29,23 @@ export default async function EventsPage() {
       ) : (
         <section className="eventsGrid innerContainer">
           {events.map((event) => (
-            <article key={event.id}>
-              <div className="eventGridImage">
-                {event.imageUrl ? (
-                  <Image src={event.imageUrl} alt={event.title} fill unoptimized loading="lazy" sizes="(max-width: 700px) 100vw, 33vw" style={{ objectFit: "cover" }} />
-                ) : (
-                  <div className="eventImageFallback"><CalendarDays size={46} /><span>IEEE CS Event</span></div>
-                )}
-              </div>
-              <section>
-                <span><CalendarDays size={14} /> {displayDate(event.eventDate)}</span>
-                <h2>{event.title}</h2>
-                <p>{event.description}</p>
-                {event.location && <small className="eventLocation"><MapPin size={13} /> {event.location}</small>}
-              </section>
-            </article>
+            <Link key={event.id} href={`/events/${event.id}`} className="eventCardLink">
+              <article className="eventCard">
+                <div className="eventGridImage">
+                  {event.imageUrl ? (
+                    <Image src={event.imageUrl} alt={event.title} fill unoptimized loading="lazy" sizes="(max-width: 700px) 100vw, 33vw" style={{ objectFit: "cover" }} />
+                  ) : (
+                    <div className="eventImageFallback"><CalendarDays size={46} /><span>IEEE CS Event</span></div>
+                  )}
+                </div>
+                <section>
+                  <span><CalendarDays size={14} /> {displayDate(event.eventDate)}</span>
+                  <h2>{event.title}</h2>
+                  <p>{event.description}</p>
+                  {event.location && <small className="eventLocation"><MapPin size={13} /> {event.location}</small>}
+                </section>
+              </article>
+            </Link>
           ))}
         </section>
       )}

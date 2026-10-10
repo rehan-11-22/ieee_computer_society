@@ -21,7 +21,7 @@ export default function ContactPage() {
         </div>
         <div className="innerHeroImage contactHeroImage">
           <Image
-            src="/WhatsApp Image 2026-09-30 at 5.14.41 PM (1).jpeg"
+            src="/team_hero.jpeg"
             alt="IEEE Computer Society students collaborating"
             fill
             priority

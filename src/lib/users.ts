@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { Collection, WithId } from "mongodb";
+import { ObjectId, type Collection, type WithId } from "mongodb";
 import { getDatabase } from "@/lib/mongodb";
 
 export interface AdminUserDocument {
@@ -62,4 +62,31 @@ export async function listAdmins() {
     role: "admin" as const,
     createdAt: admin.createdAt.toISOString(),
   }));
+}
+
+export async function updateAdmin(id: string, input: { email: string; passwordHash?: string }) {
+  if (!ObjectId.isValid(id)) return null;
+  const collection = await userCollection();
+  const $set: Partial<AdminUserDocument> = {
+    email: normalizeEmail(input.email),
+    updatedAt: new Date(),
+  };
+  if (input.passwordHash) $set.passwordHash = input.passwordHash;
+  const admin = await collection.findOneAndUpdate(
+    { _id: new ObjectId(id) },
+    { $set },
+    { returnDocument: "after" },
+  );
+  return admin ? {
+    id: admin._id.toHexString(),
+    email: admin.email,
+    role: admin.role,
+    createdAt: admin.createdAt.toISOString(),
+  } : null;
+}
+
+export async function deleteAdmin(id: string) {
+  if (!ObjectId.isValid(id)) return false;
+  const collection = await userCollection();
+  return (await collection.deleteOne({ _id: new ObjectId(id) })).deletedCount === 1;
 }

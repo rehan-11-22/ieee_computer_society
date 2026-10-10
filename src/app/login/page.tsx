@@ -72,6 +72,7 @@ export default function AdminPage() {
   const [templateAsDefault, setTemplateAsDefault] = useState(true);
   const [templateUploading, setTemplateUploading] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<CertificateTemplate | null>(null);
+  const [showTemplateUpload, setShowTemplateUpload] = useState(false);
 
   const [admins, setAdmins] = useState<AdminAccount[]>([]);
   const [adminsLoading, setAdminsLoading] = useState(false);
@@ -80,6 +81,9 @@ export default function AdminPage() {
   const [adminPasswordConfirm, setAdminPasswordConfirm] = useState("");
   const [adminFormError, setAdminFormError] = useState("");
   const [adminFormLoading, setAdminFormLoading] = useState(false);
+  const [showAdminCreate, setShowAdminCreate] = useState(false);
+  const [editingAdmin, setEditingAdmin] = useState<AdminAccount | null>(null);
+  const [pendingAdminDelete, setPendingAdminDelete] = useState<AdminAccount | null>(null);
 
   // Form state
   const [fName, setFName] = useState("");
@@ -323,11 +327,16 @@ export default function AdminPage() {
       showToast("Passwords do not match", "error");
       return;
     }
+    if (!editingAdmin && !adminPassword) {
+      setAdminFormError("Password is required");
+      showToast("Password is required", "error");
+      return;
+    }
 
     setAdminFormLoading(true);
     try {
-      const res = await fetch("/api/admins", {
-        method: "POST",
+      const res = await fetch(editingAdmin ? `/api/admins/${editingAdmin.id}` : "/api/admins", {
+        method: editingAdmin ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: adminEmail, password: adminPassword }),
       });
@@ -339,11 +348,13 @@ export default function AdminPage() {
         return;
       }
 
-      setAdmins((current) => [...current, data]);
+      setAdmins((current) => editingAdmin ? current.map((admin) => admin.id === editingAdmin.id ? data : admin) : [...current, data]);
       setAdminEmail("");
       setAdminPassword("");
       setAdminPasswordConfirm("");
-      showToast(`Admin ${data.email} created successfully`);
+      setShowAdminCreate(false);
+      setEditingAdmin(null);
+      showToast(`Admin ${data.email} ${editingAdmin ? "updated" : "created"} successfully`);
     } catch {
       const message = "Network error. Please try again.";
       setAdminFormError(message);
@@ -352,6 +363,45 @@ export default function AdminPage() {
       setAdminFormLoading(false);
     }
   };
+
+  function openAdminCreate() {
+    setEditingAdmin(null);
+    setAdminEmail("");
+    setAdminPassword("");
+    setAdminPasswordConfirm("");
+    setAdminFormError("");
+    setShowAdminCreate(true);
+  }
+
+  function openAdminEdit(admin: AdminAccount) {
+    setEditingAdmin(admin);
+    setAdminEmail(admin.email);
+    setAdminPassword("");
+    setAdminPasswordConfirm("");
+    setAdminFormError("");
+    setShowAdminCreate(true);
+  }
+
+  async function deleteAdminAccount() {
+    if (!pendingAdminDelete) return;
+    try {
+      const res = await fetch(`/api/admins/${pendingAdminDelete.id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        setAuthState("login");
+        return;
+      }
+      if (!res.ok) {
+        showToast(data.error || "Admin account could not be deleted", "error");
+        return;
+      }
+      setAdmins((current) => current.filter((admin) => admin.id !== pendingAdminDelete.id));
+      showToast(`Admin ${pendingAdminDelete.email} deleted successfully`);
+      setPendingAdminDelete(null);
+    } catch {
+      showToast("Network error while deleting admin account", "error");
+    }
+  }
 
   const handleTemplateUpload = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -377,6 +427,7 @@ export default function AdminPage() {
       setTemplateName("");
       setTemplateFile(null);
       setTemplateAsDefault(false);
+      setShowTemplateUpload(false);
       const fileInput = document.getElementById("template-image") as HTMLInputElement | null;
       if (fileInput) fileInput.value = "";
       showToast(`Template ${data.name} uploaded successfully`);
@@ -726,7 +777,9 @@ export default function AdminPage() {
           </>
         ) : activePanel === "templates" ? (
           <div className="templateManagement">
-            <section className="templateUploadCard">
+            {showTemplateUpload && (
+            <div className="contentEditorModal" role="presentation">
+            <section className="templateUploadCard contentEditorPanel">
               <div className="eyebrow">Design Upload</div>
               <h3>Add Certificate Template</h3>
               <p>
@@ -763,8 +816,13 @@ export default function AdminPage() {
                 <button className="primary" type="submit" disabled={templateUploading}>
                   {templateUploading ? "Uploading..." : "+ Upload Template"}
                 </button>
+                <button className="secondary" type="button" onClick={() => setShowTemplateUpload(false)}>
+                  Cancel
+                </button>
               </form>
             </section>
+            </div>
+            )}
 
             <section className="templateLibraryCard">
               <div className="adminListHead">
@@ -772,7 +830,7 @@ export default function AdminPage() {
                   <div className="eyebrow">Template Library</div>
                   <h3>Available Templates</h3>
                 </div>
-                <span className="adminCount">{templates.length}</span>
+                <div className="adminListActions"><span className="adminCount">{templates.length}</span><button className="primary" type="button" onClick={() => setShowTemplateUpload(true)}>+ Add Template</button></div>
               </div>
               {templatesLoading ? (
                 <p className="adminEmpty">Loading certificate templates...</p>
@@ -829,10 +887,12 @@ export default function AdminPage() {
           </div>
         ) : activePanel === "admins" ? (
           <div className="adminManagement">
-            <section className="adminCreateCard">
+            {showAdminCreate && (
+            <div className="contentEditorModal" role="presentation">
+            <section className="adminCreateCard contentEditorPanel">
               <div className="eyebrow">Authorized Access</div>
-              <h3>Add New Admin</h3>
-              <p>New admins can manage certificates and create other admin accounts.</p>
+              <h3>{editingAdmin ? "Edit Admin" : "Add New Admin"}</h3>
+              <p>{editingAdmin ? "Update the admin email or set a new password." : "New admins can manage certificates and create other admin accounts."}</p>
 
               {adminFormError && <div className="formError" role="alert">{adminFormError}</div>}
 
@@ -846,31 +906,36 @@ export default function AdminPage() {
                   onChange={(event) => setAdminEmail(event.target.value)}
                   placeholder="admin@example.com"
                 />
-                <label htmlFor="admin-password">Password</label>
+                <label htmlFor="admin-password">{editingAdmin ? "New password" : "Password"}</label>
                 <input
                   id="admin-password"
                   type="password"
-                  required
+                  required={!editingAdmin}
                   minLength={10}
                   value={adminPassword}
                   onChange={(event) => setAdminPassword(event.target.value)}
-                  placeholder="At least 10 characters"
+                  placeholder={editingAdmin ? "Leave blank to keep current password" : "At least 10 characters"}
                 />
                 <label htmlFor="admin-password-confirm">Confirm password</label>
                 <input
                   id="admin-password-confirm"
                   type="password"
-                  required
+                  required={!editingAdmin || Boolean(adminPassword)}
                   minLength={10}
                   value={adminPasswordConfirm}
                   onChange={(event) => setAdminPasswordConfirm(event.target.value)}
-                  placeholder="Re-enter password"
+                  placeholder={editingAdmin ? "Confirm new password if changing it" : "Re-enter password"}
                 />
                 <button className="primary" type="submit" disabled={adminFormLoading}>
-                  {adminFormLoading ? "Creating Admin..." : "+ Create Admin"}
+                  {adminFormLoading ? "Saving..." : editingAdmin ? "Update Admin" : "+ Create Admin"}
+                </button>
+                <button className="secondary" type="button" onClick={() => { setShowAdminCreate(false); setEditingAdmin(null); setAdminFormError(""); }}>
+                  Cancel
                 </button>
               </form>
             </section>
+            </div>
+            )}
 
             <section className="adminListCard">
               <div className="adminListHead">
@@ -878,7 +943,7 @@ export default function AdminPage() {
                   <div className="eyebrow">Access List</div>
                   <h3>Existing Admins</h3>
                 </div>
-                <span className="adminCount">{admins.length}</span>
+                <div className="adminListActions"><span className="adminCount">{admins.length}</span><button className="primary" type="button" onClick={openAdminCreate}>+ Add Admin</button></div>
               </div>
               {adminsLoading ? (
                 <p className="adminEmpty">Loading admin accounts...</p>
@@ -894,6 +959,10 @@ export default function AdminPage() {
                         <span>Administrator · Added {new Date(admin.createdAt).toLocaleDateString()}</span>
                       </div>
                       {admin.email === userEmail && <span className="currentAdmin">You</span>}
+                      <div className="adminAccountActions">
+                        <button className="tableAction" type="button" onClick={() => openAdminEdit(admin)}>Edit</button>
+                        <button className="tableAction tableDelete" type="button" disabled={admin.email === userEmail} onClick={() => setPendingAdminDelete(admin)}>Delete</button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1035,6 +1104,26 @@ export default function AdminPage() {
               </button>
               <button className="dangerButton" type="button" onClick={() => void deleteCertificate()}>
                 Delete Certificate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {pendingAdminDelete && (
+        <div className="modal" role="presentation">
+          <div className="confirmBox" role="dialog" aria-modal="true" aria-labelledby="admin-delete-title">
+            <div className="confirmIcon" aria-hidden="true">!</div>
+            <h2 id="admin-delete-title">Delete Admin?</h2>
+            <p>
+              <strong>{pendingAdminDelete.email}</strong> will lose access to this admin portal. This action cannot be undone.
+            </p>
+            <div className="confirmActions">
+              <button className="secondary" type="button" onClick={() => setPendingAdminDelete(null)}>
+                Cancel
+              </button>
+              <button className="dangerButton" type="button" onClick={() => void deleteAdminAccount()}>
+                Delete Admin
               </button>
             </div>
           </div>

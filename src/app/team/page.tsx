@@ -9,10 +9,22 @@ export default async function TeamPage() {
 
   return (
     <main className="innerPage listingPage">
-      <section className="listingHero innerContainer">
-        <span className="sectionPill">Our Leadership</span>
-        <h1>Meet the people who <em>make it happen.</em></h1>
-        <p>Student leaders and faculty mentors working together to create valuable opportunities for our community.</p>
+      <section className="aboutHero innerContainer">
+        <div className="innerHeroCopy">
+          <span className="sectionPill">Our Leadership</span>
+          <h1>Meet the people who <em>make it happen.</em></h1>
+          <p>Student leaders and faculty mentors working together to create valuable opportunities for our community.</p>
+        </div>
+        <div className="innerHeroImage">
+          <Image
+            src="/contact_hero.jpeg"
+            alt="IEEE Computer Society Superior University Team"
+            fill
+            priority
+            sizes="(max-width: 850px) 100vw, 50vw"
+            style={{ objectFit: "cover" }}
+          />
+        </div>
       </section>
 
       {team.length === 0 ? (

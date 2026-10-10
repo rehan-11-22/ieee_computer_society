@@ -8,10 +8,10 @@ import Image from "next/image";
 
 const galleryImages = [
   "/WhatsApp Image 2026-09-30 at 5.14.05 PM.jpeg",
-  "/WhatsApp Image 2026-09-30 at 5.14.40 PM.jpeg",
-  "/WhatsApp Image 2026-09-30 at 5.14.41 PM (1).jpeg",
-  "/WhatsApp Image 2026-09-30 at 5.14.41 PM (2).jpeg",
-  "/WhatsApp Image 2026-09-30 at 5.14.41 PM.jpeg",
+  "/new_pic1.jpeg",
+  "/new_pic2.jpeg",
+  "/new_pic3.jpeg",
+  "/new_pic4.jpeg",
   "/WhatsApp Image 2026-09-30 at 5.15.16 PM.jpeg",
   "/WhatsApp Image 2026-09-30 at 5.15.17 PM.jpeg",
   "/WhatsApp Image 2026-09-30 at 5.15.57 PM.jpeg",
@@ -51,7 +51,6 @@ export function GalleryCarousel() {
                   sizes="(max-width: 700px) 88vw, (max-width: 1050px) 45vw, 31vw"
                   style={{ objectFit: "cover" }}
                 />
-                <span>{String(index + 1).padStart(2, "0")}</span>
               </div>
             </div>
           ))}
