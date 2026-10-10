@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { CalendarDays, MapPin, Sparkles } from "lucide-react";
+import { CalendarDays, ChevronRight, MapPin, Sparkles } from "lucide-react";
 import { listEvents } from "@/lib/content";
 
 export const dynamic = "force-dynamic";
@@ -68,12 +68,17 @@ export default async function EventsPage() {
         </section>
       ) : (
         <div className="eventStatusSections innerContainer">
-          {groups.map((group) => (
-            <section key={group.key} className="eventStatusSection">
-              <div className="eventStatusHeading"><div><span className="sectionPill">{group.title}</span><p>{group.description}</p></div><strong>{group.events.length}</strong></div>
-              {group.events.length > 0 ? <EventCards events={group.events} /> : <p className="eventStatusEmpty">No {group.key} events right now.</p>}
-            </section>
-          ))}
+          <div className="eventCategoryCards">
+            {groups.map((group) => (
+              <Link key={group.key} href={`/events/category/${group.key}`} className="eventCategoryCard">
+                <span className="eventCategoryIcon"><CalendarDays size={21} /></span>
+                <span className="sectionPill">{group.title}</span>
+                <strong>{group.events.length} events</strong>
+                <p>{group.description}</p>
+                <span className="eventCategoryLink">View all events <ChevronRight size={15} /></span>
+              </Link>
+            ))}
+          </div>
         </div>
       )}
     </main>
