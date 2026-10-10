@@ -26,10 +26,6 @@ async function image(form: FormData): Promise<ParseResult<EventInput["image"]>> 
   return { ok: true, value: { data: new Uint8Array(await value.arrayBuffer()), mimeType: value.type as ContentImageMimeType } };
 }
 
-export async function parseImage(form: FormData): Promise<ParseResult<EventInput["image"]>> {
-  return image(form);
-}
-
 export async function parseEventForm(form: FormData): Promise<ParseResult<EventInput>> {
   const title = text(form, "title", "Title", 120);
   const description = text(form, "description", "Description", 500);
