@@ -15,11 +15,12 @@ function eventDay(value: string) {
 }
 
 function eventGroups(events: SocietyEvent[]) {
-  const today = new Date();
-  const todayUtc = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
-  const upcoming = events.filter((event) => eventDay(event.eventDate) >= todayUtc).sort((a, b) => eventDay(a.eventDate) - eventDay(b.eventDate));
-  const previous = events.filter((event) => eventDay(event.eventDate) < todayUtc).sort((a, b) => eventDay(b.eventDate) - eventDay(a.eventDate));
-  return { upcoming, previous };
+  const order = { upcoming: 0, latest: 1, previous: 2 };
+  return {
+    upcoming: events.filter((event) => event.section === "upcoming").sort((a, b) => eventDay(a.eventDate) - eventDay(b.eventDate)),
+    latest: events.filter((event) => event.section === "latest").sort((a, b) => eventDay(b.eventDate) - eventDay(a.eventDate)),
+    previous: events.filter((event) => event.section === "previous").sort((a, b) => eventDay(b.eventDate) - eventDay(a.eventDate)),
+  };
 }
 
 function EventAdminItem({ item, onEdit, onDelete }: { item: SocietyEvent; onEdit: () => void; onDelete: () => void }) {
@@ -70,6 +71,7 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [eventDate, setEventDate] = useState("");
+  const [section, setSection] = useState<"upcoming" | "latest" | "previous">("upcoming");
   const [location, setLocation] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
 
@@ -110,6 +112,7 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
     setTitle("");
     setDescription("");
     setEventDate("");
+    setSection("upcoming");
     setLocation("");
     setImageFile(null);
     const input = document.getElementById("event-image") as HTMLInputElement | null;
@@ -121,6 +124,7 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
     setTitle(event.title);
     setDescription(event.description);
     setEventDate(event.eventDate);
+    setSection(event.section);
     setLocation(event.location);
     setImageFile(null);
   }
@@ -133,6 +137,7 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
       form.set("title", title);
       form.set("description", description);
       form.set("eventDate", eventDate);
+      form.set("section", section);
       form.set("location", location);
       if (imageFile) form.set("image", imageFile);
       const response = await fetch(editing ? `/api/events/${editing.id}` : "/api/events", { method: editing ? "PUT" : "POST", body: form });
@@ -177,6 +182,7 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
           <textarea id="event-description" required maxLength={500} value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Short event description" />
           <div className="contentFormRow">
             <div><label htmlFor="event-date">Event date</label><input id="event-date" type="date" required value={eventDate} onChange={(event) => setEventDate(event.target.value)} /></div>
+            <div><label htmlFor="event-section">Show in section</label><select id="event-section" value={section} onChange={(event) => setSection(event.target.value as "upcoming" | "latest" | "previous")}><option value="upcoming">Upcoming</option><option value="latest">Latest</option><option value="previous">Previous</option></select></div>
             <div><label htmlFor="event-location">Location</label><input id="event-location" maxLength={140} value={location} onChange={(event) => setLocation(event.target.value)} placeholder="Superior University" /></div>
           </div>
           <label htmlFor="event-image">Event image</label>
@@ -203,7 +209,7 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
               </div>
             </section>
           );
-          return <>{renderGroup("Upcoming Events", groups.upcoming)}{renderGroup("Previous Events", groups.previous)}</>;
+          return <>{renderGroup("Upcoming Events", groups.upcoming)}{renderGroup("Latest Events", groups.latest)}{renderGroup("Previous Events", groups.previous)}</>;
         })()}
       </section>
 

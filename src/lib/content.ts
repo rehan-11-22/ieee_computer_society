@@ -2,7 +2,7 @@ import "server-only";
 
 import { Binary, ObjectId, type Collection, type WithId } from "mongodb";
 import { getDatabase } from "@/lib/mongodb";
-import type { SocietyEvent, TeamMember } from "@/lib/types";
+import type { EventSection, SocietyEvent, TeamMember } from "@/lib/types";
 
 export type ContentImageMimeType = "image/png" | "image/jpeg" | "image/webp";
 
@@ -11,6 +11,7 @@ interface EventDocument {
   description: string;
   eventDate: string;
   location: string;
+  section?: EventSection;
   image?: Binary;
   imageMimeType?: ContentImageMimeType;
   imageSize?: number;
@@ -35,6 +36,7 @@ export interface EventInput {
   description: string;
   eventDate: string;
   location: string;
+  section: EventSection;
   image?: { data: Uint8Array; mimeType: ContentImageMimeType };
 }
 
@@ -73,6 +75,7 @@ function serializeEvent(document: WithId<EventDocument>): SocietyEvent {
     description: document.description,
     eventDate: document.eventDate,
     location: document.location,
+    section: document.section || "upcoming",
     ...(hasImage ? { imageUrl: `/api/events/${id}/image?v=${document.updatedAt.getTime()}` } : {}),
     createdAt: document.createdAt.toISOString(),
   };
@@ -126,6 +129,7 @@ export async function createEvent(input: EventInput): Promise<SocietyEvent> {
     description: input.description,
     eventDate: input.eventDate,
     location: input.location,
+    section: input.section,
     ...imageFields(input.image),
     createdAt: now,
     updatedAt: now,
@@ -140,7 +144,7 @@ export async function updateEvent(id: string, input: EventInput): Promise<Societ
   const collection = await eventCollection();
   const document = await collection.findOneAndUpdate(
     { _id },
-    { $set: { title: input.title, description: input.description, eventDate: input.eventDate, location: input.location, ...imageFields(input.image), updatedAt: new Date() } },
+    { $set: { title: input.title, description: input.description, eventDate: input.eventDate, location: input.location, section: input.section, ...imageFields(input.image), updatedAt: new Date() } },
     { returnDocument: "after" },
   );
   return document ? serializeEvent(document) : null;

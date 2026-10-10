@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { CalendarDays, MapPin, Sparkles } from "lucide-react";
+import type { SocietyEvent } from "@/lib/types";
 import { listEvents } from "@/lib/content";
 
 export const dynamic = "force-dynamic";
@@ -26,8 +27,13 @@ export default async function EventsPage() {
           <p>We are preparing new technical sessions and community activities. Check back soon for updates.</p>
         </section>
       ) : (
-        <section className="eventsGrid innerContainer">
-          {events.map((event) => (
+        <div className="eventSectionStack innerContainer">
+          {(["upcoming", "latest", "previous"] as const).map((section) => {
+            const sectionEvents = events.filter((event) => event.section === section);
+            if (!sectionEvents.length) return null;
+            const labels = { upcoming: "Upcoming Events", latest: "Latest Events", previous: "Previous Events" };
+            return <section className="eventPublicSection" key={section}><div className="eventPublicSectionHead"><h2>{labels[section]}</h2><span>{sectionEvents.length}</span></div><div className="eventsGrid">
+          {sectionEvents.map((event: SocietyEvent) => (
             <article key={event.id}>
               <div className="eventGridImage">
                 {event.imageUrl ? (
@@ -44,7 +50,9 @@ export default async function EventsPage() {
               </section>
             </article>
           ))}
-        </section>
+            </div></section>;
+          })}
+        </div>
       )}
     </main>
   );
