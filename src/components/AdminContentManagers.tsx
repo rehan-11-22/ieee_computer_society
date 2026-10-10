@@ -201,12 +201,14 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
           <p className="adminEmpty">No events yet. The public Events page currently shows “Coming Soon”.</p>
         ) : (() => {
           const groups = eventGroups(events);
-          const renderGroup = (label: string, items: SocietyEvent[]) => items.length > 0 && (
+          const renderGroup = (label: string, items: SocietyEvent[]) => (
             <section className="eventAdminGroup" key={label}>
               <div className="eventAdminGroupHead"><h4>{label}</h4><span>{items.length}</span></div>
-              <div className="contentAdminList">
-                {items.map((item) => <EventAdminItem key={item.id} item={item} onEdit={() => edit(item)} onDelete={() => setPendingDelete(item)} />)}
-              </div>
+              {items.length > 0 ? (
+                <div className="contentAdminList">
+                  {items.map((item) => <EventAdminItem key={item.id} item={item} onEdit={() => edit(item)} onDelete={() => setPendingDelete(item)} />)}
+                </div>
+              ) : <p className="adminEmpty">No events in this section.</p>}
             </section>
           );
           return <>{renderGroup("Upcoming Events", groups.upcoming)}{renderGroup("Latest Events", groups.latest)}{renderGroup("Previous Events", groups.previous)}</>;
