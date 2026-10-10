@@ -2,7 +2,7 @@ import "server-only";
 
 import { Binary, ObjectId, type Collection, type WithId } from "mongodb";
 import { getDatabase } from "@/lib/mongodb";
-import type { EventSection, SocietyEvent, TeamMember } from "@/lib/types";
+import type { SocietyEvent, TeamMember, EventGalleryImage, EventPageSection } from "@/lib/types";
 
 export type ContentImageMimeType = "image/png" | "image/jpeg" | "image/webp";
 
@@ -11,12 +11,21 @@ interface EventDocument {
   description: string;
   eventDate: string;
   location: string;
-  section?: EventSection;
   image?: Binary;
   imageMimeType?: ContentImageMimeType;
   imageSize?: number;
+  pageSections?: EventPageSection[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+interface EventGalleryDocument {
+  eventId: ObjectId;
+  image: Binary;
+  imageMimeType: ContentImageMimeType;
+  imageSize: number;
+  description?: string;
+  createdAt: Date;
 }
 
 interface TeamMemberDocument {
@@ -36,8 +45,8 @@ export interface EventInput {
   description: string;
   eventDate: string;
   location: string;
-  section: EventSection;
   image?: { data: Uint8Array; mimeType: ContentImageMimeType };
+  pageSections: EventPageSection[];
 }
 
 export interface TeamMemberInput {
@@ -52,6 +61,13 @@ async function eventCollection(): Promise<Collection<EventDocument>> {
   const database = await getDatabase();
   const collection = database.collection<EventDocument>("society_events");
   await collection.createIndex({ eventDate: -1, createdAt: -1 });
+  return collection;
+}
+
+async function eventGalleryCollection(): Promise<Collection<EventGalleryDocument>> {
+  const database = await getDatabase();
+  const collection = database.collection<EventGalleryDocument>("event_gallery");
+  await collection.createIndex({ eventId: 1, createdAt: -1 });
   return collection;
 }
 
@@ -75,8 +91,8 @@ function serializeEvent(document: WithId<EventDocument>): SocietyEvent {
     description: document.description,
     eventDate: document.eventDate,
     location: document.location,
-    section: document.section || "upcoming",
     ...(hasImage ? { imageUrl: `/api/events/${id}/image?v=${document.updatedAt.getTime()}` } : {}),
+    pageSections: Array.isArray(document.pageSections) ? document.pageSections : [],
     createdAt: document.createdAt.toISOString(),
   };
 }
@@ -129,7 +145,7 @@ export async function createEvent(input: EventInput): Promise<SocietyEvent> {
     description: input.description,
     eventDate: input.eventDate,
     location: input.location,
-    section: input.section,
+    pageSections: input.pageSections,
     ...imageFields(input.image),
     createdAt: now,
     updatedAt: now,
@@ -144,7 +160,7 @@ export async function updateEvent(id: string, input: EventInput): Promise<Societ
   const collection = await eventCollection();
   const document = await collection.findOneAndUpdate(
     { _id },
-    { $set: { title: input.title, description: input.description, eventDate: input.eventDate, location: input.location, section: input.section, ...imageFields(input.image), updatedAt: new Date() } },
+    { $set: { title: input.title, description: input.description, eventDate: input.eventDate, location: input.location, pageSections: input.pageSections, ...imageFields(input.image), updatedAt: new Date() } },
     { returnDocument: "after" },
   );
   return document ? serializeEvent(document) : null;
@@ -153,6 +169,10 @@ export async function updateEvent(id: string, input: EventInput): Promise<Societ
 export async function deleteEvent(id: string) {
   const _id = objectId(id);
   if (!_id) return false;
+  
+  const galleryColl = await eventGalleryCollection();
+  await galleryColl.deleteMany({ eventId: _id });
+
   return (await (await eventCollection()).deleteOne({ _id })).deletedCount === 1;
 }
 
@@ -210,4 +230,54 @@ export async function getTeamMemberImage(id: string) {
   const document = await (await teamCollection()).findOne({ _id }, { projection: { image: 1, imageMimeType: 1, imageSize: 1 } });
   if (!document?.image || !document.imageMimeType || !document.imageSize) return null;
   return { data: new Uint8Array(document.image.value()), mimeType: document.imageMimeType, size: document.imageSize };
+}
+
+export async function addEventGalleryImage(eventId: string, image: { data: Uint8Array; mimeType: ContentImageMimeType }, description?: string) {
+  const _eventId = objectId(eventId);
+  if (!_eventId) throw new Error("Invalid event ID");
+  const event = await (await eventCollection()).findOne({ _id: _eventId }, { projection: { _id: 1 } });
+  if (!event) throw new Error("Event not found");
+  const collection = await eventGalleryCollection();
+  const document: EventGalleryDocument = {
+    eventId: _eventId,
+    image: new Binary(image.data),
+    imageMimeType: image.mimeType,
+    imageSize: image.data.byteLength,
+    ...(description ? { description } : {}),
+    createdAt: new Date(),
+  };
+  const result = await collection.insertOne(document);
+  return result.insertedId.toHexString();
+}
+
+export async function getEventGallery(eventId: string): Promise<EventGalleryImage[]> {
+  const _eventId = objectId(eventId);
+  if (!_eventId) return [];
+  const collection = await eventGalleryCollection();
+  const documents = await collection.find({ eventId: _eventId }, { projection: { image: 0 } }).sort({ createdAt: -1 }).toArray();
+  return documents.map((doc) => ({
+    id: doc._id.toHexString(),
+    eventId: doc.eventId.toHexString(),
+    imageUrl: `/api/events/${eventId}/gallery/${doc._id.toHexString()}?v=${doc.createdAt.getTime()}`,
+    ...(doc.description ? { description: doc.description } : {}),
+    createdAt: doc.createdAt.toISOString(),
+  }));
+}
+
+export async function getEventGalleryImageRaw(eventId: string, imageId: string) {
+  const _eventId = objectId(eventId);
+  const _id = objectId(imageId);
+  if (!_eventId || !_id) return null;
+  const collection = await eventGalleryCollection();
+  const document = await collection.findOne({ _id, eventId: _eventId }, { projection: { image: 1, imageMimeType: 1, imageSize: 1 } });
+  if (!document?.image || !document.imageMimeType || !document.imageSize) return null;
+  return { data: new Uint8Array(document.image.value()), mimeType: document.imageMimeType, size: document.imageSize };
+}
+
+export async function deleteEventGalleryImage(eventId: string, imageId: string) {
+  const _eventId = objectId(eventId);
+  const _id = objectId(imageId);
+  if (!_eventId || !_id) return false;
+  const collection = await eventGalleryCollection();
+  return (await collection.deleteOne({ _id, eventId: _eventId })).deletedCount === 1;
 }
