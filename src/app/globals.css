@@ -3416,23 +3416,24 @@ footer{
 }
 
 .socialLinks a{
-    width:62px;
-    height:62px;
+    width:40px;
+    height:40px;
     display:grid;
     place-items:center;
-    border-radius:14px;
-    color:white;
+    border-radius:0;
     text-decoration:none;
-    font-size:20px;
-    font-weight:900;
 }
 
-.socialLinks a:first-child{
-    background:linear-gradient(145deg,#7c3aed,#ec4899,#f59e0b);
+.socialLinks a img{
+    display:block;
+    width:34px;
+    height:34px;
+    object-fit:contain;
 }
 
+.socialLinks a:first-child,
 .socialLinks a:last-child{
-    background:#0a76b6;
+    background:transparent;
 }
 
 .contactDetails{
