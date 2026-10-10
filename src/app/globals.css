@@ -3461,19 +3461,20 @@ footer{
     display:grid;
     place-items:center;
     border-radius:14px;
-    color:white;
-    text-decoration:none;
-    font-size:20px;
-    font-weight:900;
-}
-
-.socialLinks a:first-child{
-    background:linear-gradient(145deg,#7c3aed,#ec4899,#f59e0b);
-}
-
-.socialLinks a:last-child{
-    background:#0a76b6;
-}
+  text-decoration:none;
+  }
+  
+  .socialLinks a img{
+  width:42px;
+  height:42px;
+  display:block;
+  object-fit:contain;
+  }
+  
+  .socialLinks a:first-child,
+  .socialLinks a:last-child{
+  background:transparent;
+  }
 
 .contactDetails{
     padding:29px 32px 34px;
