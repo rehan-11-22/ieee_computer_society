@@ -49,8 +49,8 @@ export default function ContactPage() {
         <span className="sectionPill">Our Social Media</span>
         <h2>Follow us for the latest updates, events, and highlights.</h2>
         <div className="socialLinks">
-          <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><span aria-hidden="true">IG</span></a>
-          <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><span aria-hidden="true">in</span></a>
+          <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><img src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/instagram/default.svg" alt="" width="28" height="28" /></a>
+          <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><img src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/linkedin/default.svg" alt="" width="28" height="28" /></a>
         </div>
       </section>
 
