@@ -10,6 +10,28 @@ function dateLabel(value: string) {
   return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}T00:00:00Z`));
 }
 
+function eventDay(value: string) {
+  return new Date(`${value}T00:00:00Z`).getTime();
+}
+
+function eventGroups(events: SocietyEvent[]) {
+  const today = new Date();
+  const todayUtc = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+  const upcoming = events.filter((event) => eventDay(event.eventDate) >= todayUtc).sort((a, b) => eventDay(a.eventDate) - eventDay(b.eventDate));
+  const previous = events.filter((event) => eventDay(event.eventDate) < todayUtc).sort((a, b) => eventDay(b.eventDate) - eventDay(a.eventDate));
+  return { upcoming, previous };
+}
+
+function EventAdminItem({ item, onEdit, onDelete }: { item: SocietyEvent; onEdit: () => void; onDelete: () => void }) {
+  return (
+    <article>
+      <div className="contentThumb">{item.imageUrl ? <Image src={item.imageUrl} alt="" fill unoptimized loading="lazy" sizes="110px" /> : <span>EVENT</span>}</div>
+      <div className="contentAdminMeta"><strong>{item.title}</strong><span>{dateLabel(item.eventDate)}{item.location ? ` · ${item.location}` : ""}</span><p>{item.description}</p></div>
+      <div className="contentAdminActions"><button className="tableAction" type="button" onClick={onEdit}>Edit</button><button className="tableAction tableDelete" type="button" onClick={onDelete}>Delete</button></div>
+    </article>
+  );
+}
+
 async function cropTeamImage(file: File, zoom: number, positionX: number, positionY: number) {
   const sourceUrl = URL.createObjectURL(file);
   try {
@@ -171,17 +193,18 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
         <div className="adminListHead"><div><div className="eyebrow">Event Library</div><h3>Published Events</h3></div><span className="adminCount">{events.length}</span></div>
         {loading ? <p className="adminEmpty">Loading events...</p> : events.length === 0 ? (
           <p className="adminEmpty">No events yet. The public Events page currently shows “Coming Soon”.</p>
-        ) : (
-          <div className="contentAdminList">
-            {events.map((item) => (
-              <article key={item.id}>
-                <div className="contentThumb">{item.imageUrl ? <Image src={item.imageUrl} alt="" fill unoptimized loading="lazy" sizes="110px" /> : <span>EVENT</span>}</div>
-                <div className="contentAdminMeta"><strong>{item.title}</strong><span>{dateLabel(item.eventDate)}{item.location ? ` · ${item.location}` : ""}</span><p>{item.description}</p></div>
-                <div className="contentAdminActions"><button className="tableAction" type="button" onClick={() => edit(item)}>Edit</button><button className="tableAction tableDelete" type="button" onClick={() => setPendingDelete(item)}>Delete</button></div>
-              </article>
-            ))}
-          </div>
-        )}
+        ) : (() => {
+          const groups = eventGroups(events);
+          const renderGroup = (label: string, items: SocietyEvent[]) => items.length > 0 && (
+            <section className="eventAdminGroup" key={label}>
+              <div className="eventAdminGroupHead"><h4>{label}</h4><span>{items.length}</span></div>
+              <div className="contentAdminList">
+                {items.map((item) => <EventAdminItem key={item.id} item={item} onEdit={() => edit(item)} onDelete={() => setPendingDelete(item)} />)}
+              </div>
+            </section>
+          );
+          return <>{renderGroup("Upcoming Events", groups.upcoming)}{renderGroup("Previous Events", groups.previous)}</>;
+        })()}
       </section>
 
       {pendingDelete && <ConfirmDelete title="Delete Event?" description={`${pendingDelete.title} will be permanently removed.`} onCancel={() => setPendingDelete(null)} onConfirm={() => void remove()} />}
