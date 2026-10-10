@@ -2,7 +2,7 @@ import "server-only";
 
 import { Binary, ObjectId, type Collection, type WithId } from "mongodb";
 import { getDatabase } from "@/lib/mongodb";
-import type { EventSection, SocietyEvent, TeamMember } from "@/lib/types";
+import type { EventGalleryImage, EventSection, SocietyEvent, TeamMember } from "@/lib/types";
 
 export type ContentImageMimeType = "image/png" | "image/jpeg" | "image/webp";
 
@@ -76,6 +76,7 @@ function serializeEvent(document: WithId<EventDocument>): SocietyEvent {
     eventDate: document.eventDate,
     location: document.location,
     section: document.section || "upcoming",
+    pageSections: [],
     ...(hasImage ? { imageUrl: `/api/events/${id}/image?v=${document.updatedAt.getTime()}` } : {}),
     createdAt: document.createdAt.toISOString(),
   };
@@ -162,6 +163,72 @@ export async function getEventImage(id: string) {
   const document = await (await eventCollection()).findOne({ _id }, { projection: { image: 1, imageMimeType: 1, imageSize: 1 } });
   if (!document?.image || !document.imageMimeType || !document.imageSize) return null;
   return { data: new Uint8Array(document.image.value()), mimeType: document.imageMimeType, size: document.imageSize };
+}
+
+interface EventGalleryImageDocument {
+  eventId: ObjectId;
+  description?: string;
+  image: Binary;
+  imageMimeType: ContentImageMimeType;
+  imageSize: number;
+  createdAt: Date;
+}
+
+async function eventGalleryCollection(): Promise<Collection<EventGalleryImageDocument>> {
+  const database = await getDatabase();
+  const collection = database.collection<EventGalleryImageDocument>("event_gallery_images");
+  await collection.createIndex({ eventId: 1, createdAt: 1 });
+  return collection;
+}
+
+function serializeEventGalleryImage(document: WithId<EventGalleryImageDocument>): EventGalleryImage {
+  const id = document._id.toHexString();
+  return {
+    id,
+    eventId: document.eventId.toHexString(),
+    imageUrl: `/api/events/${document.eventId.toHexString()}/gallery/${id}/image`,
+    ...(document.description ? { description: document.description } : {}),
+    createdAt: document.createdAt.toISOString(),
+  };
+}
+
+export async function getEventGallery(eventId: string): Promise<EventGalleryImage[]> {
+  const _eventId = objectId(eventId);
+  if (!_eventId) return [];
+  const documents = await (await eventGalleryCollection()).find({ eventId: _eventId }, { projection: { image: 0 } }).sort({ createdAt: 1 }).toArray();
+  return documents.map((document) => serializeEventGalleryImage(document as WithId<EventGalleryImageDocument>));
+}
+
+export async function addEventGalleryImage(eventId: string, image: { data: Uint8Array; mimeType: ContentImageMimeType }, description?: string): Promise<string> {
+  const _eventId = objectId(eventId);
+  if (!_eventId) throw new Error("Invalid event id");
+  const collection = await eventGalleryCollection();
+  const document: EventGalleryImageDocument = {
+    eventId: _eventId,
+    ...(description ? { description } : {}),
+    image: new Binary(image.data),
+    imageMimeType: image.mimeType,
+    imageSize: image.data.byteLength,
+    createdAt: new Date(),
+  };
+  const result = await collection.insertOne(document);
+  return result.insertedId.toHexString();
+}
+
+export async function getEventGalleryImageRaw(eventId: string, imageId: string) {
+  const _eventId = objectId(eventId);
+  const _imageId = objectId(imageId);
+  if (!_eventId || !_imageId) return null;
+  const document = await (await eventGalleryCollection()).findOne({ _id: _imageId, eventId: _eventId }, { projection: { image: 1, imageMimeType: 1, imageSize: 1 } });
+  if (!document?.image || !document.imageMimeType || !document.imageSize) return null;
+  return { data: new Uint8Array(document.image.value()), mimeType: document.imageMimeType, size: document.imageSize };
+}
+
+export async function deleteEventGalleryImage(eventId: string, imageId: string) {
+  const _eventId = objectId(eventId);
+  const _imageId = objectId(imageId);
+  if (!_eventId || !_imageId) return false;
+  return (await (await eventGalleryCollection()).deleteOne({ _id: _imageId, eventId: _eventId })).deletedCount === 1;
 }
 
 export async function listTeamMembers(): Promise<TeamMember[]> {
