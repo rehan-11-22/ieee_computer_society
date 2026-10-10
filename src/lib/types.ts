@@ -76,8 +76,28 @@ export interface SocietyEvent {
   location: string;
   section: EventSection;
   imageUrl?: string;
+  pageSections: EventPageSection[];
   createdAt: string;
 }
+
+export type EventPageSection =
+  | {
+      id: string;
+      type: "content";
+      heading: string;
+      subheading: string;
+      body: string;
+      align: "left" | "center";
+      headingColor: string;
+      subheadingColor: string;
+      bodyColor: string;
+    }
+  | {
+      id: string;
+      type: "gallery";
+      heading: string;
+      layout: "grid" | "carousel";
+    };
 
 export interface TeamMember {
   id: string;
@@ -86,5 +106,13 @@ export interface TeamMember {
   bio: string;
   displayOrder: number;
   imageUrl?: string;
+  createdAt: string;
+}
+
+export interface EventGalleryImage {
+  id: string;
+  eventId: string;
+  imageUrl: string;
+  description?: string;
   createdAt: string;
 }
