@@ -50,7 +50,7 @@ export default function ContactPage() {
         <h2>Follow us for the latest updates, events, and highlights.</h2>
         <div className="socialLinks">
           <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><img src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/instagram/default.svg" alt="" width="28" height="28" /></a>
-          <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><img src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/linkedin/light.svg" alt="" width="28" height="28" /></a>
+          <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><img src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/linkedin/default.svg" alt="LinkedIn" width="28" height="28" /></a>
         </div>
       </section>
 
