@@ -36,6 +36,7 @@ export async function parseEventForm(form: FormData): Promise<ParseResult<EventI
   const eventDate = text(form, "eventDate", "Event date", 10);
   const section = text(form, "section", "Event section", 10);
   const location = text(form, "location", "Location", 140, false);
+  const rawPageSections = form.get("pageSections");
   const uploadedImage = await image(form);
   if (!title.ok) return title;
   if (!description.ok) return description;
@@ -43,10 +44,20 @@ export async function parseEventForm(form: FormData): Promise<ParseResult<EventI
   if (!section.ok || !["upcoming", "latest", "previous"].includes(section.value)) return { ok: false, error: "Event section is invalid" };
   if (!location.ok) return location;
   if (!uploadedImage.ok) return uploadedImage;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(eventDate.value) || Number.isNaN(new Date(`${eventDate.value}T00:00:00Z`).getTime())) {
+  let pageSections: EventInput["pageSections"] = [];
+  if (typeof rawPageSections === "string" && rawPageSections.trim()) {
+    try {
+      const parsed = JSON.parse(rawPageSections);
+      if (!Array.isArray(parsed) || parsed.length > 20) throw new Error("invalid");
+      pageSections = parsed;
+    } catch {
+      return { ok: false, error: "Event page sections are invalid" };
+    }
+  }
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(eventDate.value) || Number.isNaN(new Date(`${eventDate.value}T00:00:00Z`).getTime())) {
     return { ok: false, error: "Event date must be a valid date" };
   }
-  return { ok: true, value: { title: title.value, description: description.value, eventDate: eventDate.value, location: location.value, section: section.value as "upcoming" | "latest" | "previous", image: uploadedImage.value } };
+  return { ok: true, value: { title: title.value, description: description.value, eventDate: eventDate.value, location: location.value, section: section.value as "upcoming" | "latest" | "previous", pageSections, image: uploadedImage.value } };
 }
 
 export async function parseTeamMemberForm(form: FormData): Promise<ParseResult<TeamMemberInput>> {

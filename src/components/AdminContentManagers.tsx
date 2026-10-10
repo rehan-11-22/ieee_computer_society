@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import type { SocietyEvent, TeamMember } from "@/lib/types";
+import type { EventPageSection, SocietyEvent, TeamMember } from "@/lib/types";
 import { EventGalleryManager } from "@/components/EventGalleryManager";
 
 type Notify = (message: string, type?: "success" | "error" | "info") => void;
@@ -26,11 +26,13 @@ function eventGroups(events: SocietyEvent[]) {
 
 function EventAdminItem({ item, onEdit, onDelete }: { item: SocietyEvent; onEdit: () => void; onDelete: () => void }) {
   return (
-    <article>
-      <div className="contentThumb">{item.imageUrl ? <Image src={item.imageUrl} alt="" fill unoptimized loading="lazy" sizes="110px" /> : <span>EVENT</span>}</div>
-      <div className="contentAdminMeta"><strong>{item.title}</strong><span>{dateLabel(item.eventDate)}{item.location ? ` · ${item.location}` : ""}</span><p>{item.description}</p></div>
-      <div className="contentAdminActions"><button className="tableAction" type="button" onClick={onEdit}>Edit</button><button className="tableAction tableDelete" type="button" onClick={onDelete}>Delete</button></div>
-    </article>
+    <tr>
+      <td><div className="tableTitleCell"><div className="contentThumb">{item.imageUrl ? <Image src={item.imageUrl} alt="" fill unoptimized loading="lazy" sizes="54px" /> : <span>EVENT</span>}</div><strong>{item.title}</strong></div></td>
+      <td>{dateLabel(item.eventDate)}</td>
+      <td>{item.location || "—"}</td>
+      <td><span className={`statusBadge status-${item.section}`}>{item.section}</span></td>
+      <td><div className="contentAdminActions"><button className="tableAction" type="button" onClick={onEdit}>Edit</button><button className="tableAction tableDelete" type="button" onClick={onDelete}>Delete</button></div></td>
+    </tr>
   );
 }
 
@@ -68,6 +70,7 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<SocietyEvent | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<SocietyEvent | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -75,6 +78,7 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
   const [section, setSection] = useState<"upcoming" | "latest" | "previous">("upcoming");
   const [location, setLocation] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [pageSections, setPageSections] = useState<EventPageSection[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -110,17 +114,20 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
 
   function reset() {
     setEditing(null);
+    setFormOpen(false);
     setTitle("");
     setDescription("");
     setEventDate("");
     setSection("upcoming");
     setLocation("");
     setImageFile(null);
+    setPageSections([]);
     const input = document.getElementById("event-image") as HTMLInputElement | null;
     if (input) input.value = "";
   }
 
   function edit(event: SocietyEvent) {
+    setFormOpen(true);
     setEditing(event);
     setTitle(event.title);
     setDescription(event.description);
@@ -128,6 +135,7 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
     setSection(event.section);
     setLocation(event.location);
     setImageFile(null);
+    setPageSections(event.pageSections || []);
   }
 
   async function save(event: FormEvent) {
@@ -140,6 +148,7 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
       form.set("eventDate", eventDate);
       form.set("section", section);
       form.set("location", location);
+      form.set("pageSections", JSON.stringify(pageSections));
       if (imageFile) form.set("image", imageFile);
       const response = await fetch(editing ? `/api/events/${editing.id}` : "/api/events", { method: editing ? "PUT" : "POST", body: form });
       const data = await response.json().catch(() => ({}));
@@ -172,7 +181,13 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
 
   return (
     <div className="contentManagement">
-      <section className="contentFormCard">
+      <section className="contentListCard">
+        <div className="adminListHead"><div><div className="eyebrow">Public Events</div><h3>Event Library</h3></div><button className="primary" type="button" onClick={() => { reset(); setFormOpen(true); }}>+ Add Event</button></div>
+        <p className="formHelp">Manage event details, page sections, and galleries from the editor.</p>
+      </section>
+
+      {formOpen && <div className="modal" role="dialog" aria-modal="true" aria-labelledby="event-modal-title"><section className="modalBox contentFormCard">
+        <button className="modalClose" type="button" aria-label="Close event editor" onClick={reset}>×</button>
         <div className="eyebrow">Public Events</div>
         <h3>{editing ? "Edit Event" : "Add New Event"}</h3>
         <p>Published events automatically appear on the public Events and Society pages.</p>
@@ -189,12 +204,17 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
           <label htmlFor="event-image">Event image</label>
           <input id="event-image" type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setImageFile(event.target.files?.[0] || null)} />
           <span className="formHelp">PNG, JPEG, or WebP up to 4 MB. Leave empty while editing to keep the current image.</span>
+          <div className="eventPageBuilder">
+            <div className="adminListHead"><div><div className="eyebrow">Page Builder</div><h4>Event detail sections</h4></div><div><button type="button" className="secondary" onClick={() => setPageSections((items) => [...items, { id: crypto.randomUUID(), type: "content", heading: "", subheading: "", body: "", align: "left", headingColor: "#0f2f57", subheadingColor: "#2563eb", bodyColor: "#64748b" }])}>+ Content</button><button type="button" className="secondary" onClick={() => setPageSections((items) => [...items, { id: crypto.randomUUID(), type: "gallery", heading: "Event Gallery", layout: "grid" }])}>+ Gallery</button></div></div>
+            {pageSections.map((item, index) => <div className="eventBuilderBlock" key={item.id}><strong>{index + 1}. {item.type === "gallery" ? "Gallery" : "Content"}</strong>{item.type === "content" ? <><input value={item.heading} onChange={(e) => setPageSections((items) => items.map((section) => section.id === item.id && section.type === "content" ? { ...section, heading: e.target.value } : section))} placeholder="Section heading" /><textarea value={item.body} onChange={(e) => setPageSections((items) => items.map((section) => section.id === item.id && section.type === "content" ? { ...section, body: e.target.value } : section))} placeholder="Section text" /></> : <select value={item.layout} onChange={(e) => setPageSections((items) => items.map((section) => section.id === item.id && section.type === "gallery" ? { ...section, layout: e.target.value as "grid" | "carousel" } : section))}><option value="grid">Grid</option><option value="carousel">Carousel</option></select>}<button type="button" className="dangerButton" onClick={() => setPageSections((items) => items.filter((section) => section.id !== item.id))}>Remove</button></div>)}
+            <span className="formHelp">Build the detail page, then open the event after saving to review the public layout.</span>
+          </div>
           <div className="contentFormActions">
             {editing && <button className="secondary" type="button" onClick={reset}>Cancel</button>}
             <button className="primary" type="submit" disabled={saving}>{saving ? "Saving..." : editing ? "Update Event" : "+ Add Event"}</button>
           </div>
         </form>
-      </section>
+      </section></div>}
 
       <section className="contentListCard">
         <div className="adminListHead"><div><div className="eyebrow">Event Library</div><h3>Published Events</h3></div><span className="adminCount">{events.length}</span></div>
@@ -206,9 +226,7 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
             <section className="eventAdminGroup" key={label}>
               <div className="eventAdminGroupHead"><h4>{label}</h4><span>{items.length}</span></div>
               {items.length > 0 ? (
-                <div className="contentAdminList">
-                  {items.map((item) => <EventAdminItem key={item.id} item={item} onEdit={() => edit(item)} onDelete={() => setPendingDelete(item)} />)}
-                </div>
+                <div className="tableBox"><table><thead><tr><th>Event</th><th>Date</th><th>Location</th><th>Section</th><th>Actions</th></tr></thead><tbody>{items.map((item) => <EventAdminItem key={item.id} item={item} onEdit={() => edit(item)} onDelete={() => setPendingDelete(item)} />)}</tbody></table></div>
               ) : <p className="adminEmpty">No events in this section.</p>}
             </section>
           );

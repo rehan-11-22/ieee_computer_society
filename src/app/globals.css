@@ -4186,7 +4186,12 @@ footer{
     margin-top:20px;
 }
 
-.contentAdminForm label{
+  .modalClose{position:absolute;top:18px;right:20px;border:0;background:transparent;color:#64748b;font-size:28px;line-height:1;cursor:pointer}
+  .modalBox{position:relative;max-height:90vh}
+  .tableTitleCell{display:flex;align-items:center;gap:10px;min-width:220px}
+  .statusBadge{display:inline-flex;padding:5px 9px;border-radius:999px;background:#edf4ff;color:var(--blue);font-size:11px;font-weight:800;text-transform:capitalize}
+  .status-latest{background:#eefbf3;color:#18794e}.status-previous{background:#f3f4f6;color:#52606d}
+  .contentAdminForm label{
     color:#52657d;
     font-size:10px;
     font-weight:800;
