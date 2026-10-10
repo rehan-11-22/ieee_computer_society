@@ -1,6 +1,6 @@
 import Image from "next/image";
-import Link from "next/link";
 import { CalendarDays, MapPin, Sparkles } from "lucide-react";
+import type { SocietyEvent } from "@/lib/types";
 import { listEvents } from "@/lib/content";
 
 export const dynamic = "force-dynamic";
@@ -27,27 +27,32 @@ export default async function EventsPage() {
           <p>We are preparing new technical sessions and community activities. Check back soon for updates.</p>
         </section>
       ) : (
-        <section className="eventsGrid innerContainer">
-          {events.map((event) => (
-            <Link key={event.id} href={`/events/${event.id}`} className="eventCardLink">
-              <article className="eventCard">
-                <div className="eventGridImage">
-                  {event.imageUrl ? (
-                    <Image src={event.imageUrl} alt={event.title} fill unoptimized loading="lazy" sizes="(max-width: 700px) 100vw, 33vw" style={{ objectFit: "cover" }} />
-                  ) : (
-                    <div className="eventImageFallback"><CalendarDays size={46} /><span>IEEE CS Event</span></div>
-                  )}
-                </div>
-                <section>
-                  <span><CalendarDays size={14} /> {displayDate(event.eventDate)}</span>
-                  <h2>{event.title}</h2>
-                  <p>{event.description}</p>
-                  {event.location && <small className="eventLocation"><MapPin size={13} /> {event.location}</small>}
-                </section>
-              </article>
-            </Link>
+        <div className="eventSectionStack innerContainer">
+          {(["upcoming", "latest", "previous"] as const).map((section) => {
+            const sectionEvents = events.filter((event) => event.section === section);
+            if (!sectionEvents.length) return null;
+            const labels = { upcoming: "Upcoming Events", latest: "Latest Events", previous: "Previous Events" };
+            return <section className="eventPublicSection" key={section}><div className="eventPublicSectionHead"><h2>{labels[section]}</h2><span>{sectionEvents.length}</span></div><div className="eventsGrid">
+          {sectionEvents.map((event: SocietyEvent) => (
+            <article key={event.id}>
+              <div className="eventGridImage">
+                {event.imageUrl ? (
+                  <Image src={event.imageUrl} alt={event.title} fill unoptimized loading="lazy" sizes="(max-width: 700px) 100vw, 33vw" style={{ objectFit: "cover" }} />
+                ) : (
+                  <div className="eventImageFallback"><CalendarDays size={46} /><span>IEEE CS Event</span></div>
+                )}
+              </div>
+              <section>
+                <span><CalendarDays size={14} /> {displayDate(event.eventDate)}</span>
+                <h2>{event.title}</h2>
+                <p>{event.description}</p>
+                {event.location && <small className="eventLocation"><MapPin size={13} /> {event.location}</small>}
+              </section>
+            </article>
           ))}
-        </section>
+            </div></section>;
+          })}
+        </div>
       )}
     </main>
   );
