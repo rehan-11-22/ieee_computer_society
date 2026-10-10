@@ -26,11 +26,13 @@ function eventGroups(events: SocietyEvent[]) {
 
 function EventAdminItem({ item, onEdit, onDelete }: { item: SocietyEvent; onEdit: () => void; onDelete: () => void }) {
   return (
-    <article>
-      <div className="contentThumb">{item.imageUrl ? <Image src={item.imageUrl} alt="" fill unoptimized loading="lazy" sizes="110px" /> : <span>EVENT</span>}</div>
-      <div className="contentAdminMeta"><strong>{item.title}</strong><span>{dateLabel(item.eventDate)}{item.location ? ` · ${item.location}` : ""}</span><p>{item.description}</p></div>
-      <div className="contentAdminActions"><button className="tableAction" type="button" onClick={onEdit}>Edit</button><button className="tableAction tableDelete" type="button" onClick={onDelete}>Delete</button></div>
-    </article>
+    <tr>
+      <td><div className="tableTitleCell"><div className="contentThumb">{item.imageUrl ? <Image src={item.imageUrl} alt="" fill unoptimized loading="lazy" sizes="54px" /> : <span>EVENT</span>}</div><strong>{item.title}</strong></div></td>
+      <td>{dateLabel(item.eventDate)}</td>
+      <td>{item.location || "—"}</td>
+      <td><span className={`statusBadge status-${item.section}`}>{item.section}</span></td>
+      <td><div className="contentAdminActions"><button className="tableAction" type="button" onClick={onEdit}>Edit</button><button className="tableAction tableDelete" type="button" onClick={onDelete}>Delete</button></div></td>
+    </tr>
   );
 }
 
@@ -68,6 +70,7 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<SocietyEvent | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<SocietyEvent | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -111,6 +114,7 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
 
   function reset() {
     setEditing(null);
+    setFormOpen(false);
     setTitle("");
     setDescription("");
     setEventDate("");
@@ -123,6 +127,7 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
   }
 
   function edit(event: SocietyEvent) {
+    setFormOpen(true);
     setEditing(event);
     setTitle(event.title);
     setDescription(event.description);
@@ -176,7 +181,13 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
 
   return (
     <div className="contentManagement">
-      <section className="contentFormCard">
+      <section className="contentListCard">
+        <div className="adminListHead"><div><div className="eyebrow">Public Events</div><h3>Event Library</h3></div><button className="primary" type="button" onClick={() => { reset(); setFormOpen(true); }}>+ Add Event</button></div>
+        <p className="formHelp">Manage event details, page sections, and galleries from the editor.</p>
+      </section>
+
+      {formOpen && <div className="modal" role="dialog" aria-modal="true" aria-labelledby="event-modal-title"><section className="modalBox contentFormCard">
+        <button className="modalClose" type="button" aria-label="Close event editor" onClick={reset}>×</button>
         <div className="eyebrow">Public Events</div>
         <h3>{editing ? "Edit Event" : "Add New Event"}</h3>
         <p>Published events automatically appear on the public Events and Society pages.</p>
@@ -203,7 +214,7 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
             <button className="primary" type="submit" disabled={saving}>{saving ? "Saving..." : editing ? "Update Event" : "+ Add Event"}</button>
           </div>
         </form>
-      </section>
+      </section></div>}
 
       <section className="contentListCard">
         <div className="adminListHead"><div><div className="eyebrow">Event Library</div><h3>Published Events</h3></div><span className="adminCount">{events.length}</span></div>
@@ -215,9 +226,7 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
             <section className="eventAdminGroup" key={label}>
               <div className="eventAdminGroupHead"><h4>{label}</h4><span>{items.length}</span></div>
               {items.length > 0 ? (
-                <div className="contentAdminList">
-                  {items.map((item) => <EventAdminItem key={item.id} item={item} onEdit={() => edit(item)} onDelete={() => setPendingDelete(item)} />)}
-                </div>
+                <div className="tableBox"><table><thead><tr><th>Event</th><th>Date</th><th>Location</th><th>Section</th><th>Actions</th></tr></thead><tbody>{items.map((item) => <EventAdminItem key={item.id} item={item} onEdit={() => edit(item)} onDelete={() => setPendingDelete(item)} />)}</tbody></table></div>
               ) : <p className="adminEmpty">No events in this section.</p>}
             </section>
           );
