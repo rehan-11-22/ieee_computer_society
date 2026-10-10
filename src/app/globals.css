@@ -4221,43 +4221,10 @@ footer{
 }
 
 .contentAdminForm textarea{
-  min-height:90px;
-  resize:vertical;
-  font-family:inherit;
-  }
-
-.teamImageEditor{
-  display:grid;
-  grid-template-columns:140px 1fr;
-  gap:14px;
-  align-items:center;
-  padding:12px;
-  border:1px solid #d7e0eb;
-  border-radius:12px;
-  background:#f8fbff;
-  margin-top:4px;
-  }
-.teamImageCropPreview{
-  width:140px;
-  aspect-ratio:1;
-  border-radius:50%;
-  overflow:hidden;
-  background:#dbeafe;
-  position:relative;
-  }
-.teamImageCropPreview img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  transform-origin:center;
-  transition:transform .12s ease;
-  }
-.teamImageControls{display:flex;flex-direction:column;gap:5px}
-.teamImageControls label{display:flex;justify-content:space-between;margin-top:0}
-.teamImageControls output{font-weight:700;color:var(--blue)}
-.teamImageControls input[type="range"]{width:100%;padding:0;border:0;box-shadow:none}
-@media(max-width:520px){.teamImageEditor{grid-template-columns:1fr}.teamImageCropPreview{width:120px}}
-
+    min-height:90px;
+    resize:vertical;
+    font-family:inherit;
+}
 
 .contentAdminForm input:focus,
 .contentAdminForm textarea:focus,

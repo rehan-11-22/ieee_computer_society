@@ -11,35 +11,6 @@ function dateLabel(value: string) {
   return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}T00:00:00Z`));
 }
 
-async function cropTeamImage(file: File, zoom: number, positionX: number, positionY: number) {
-  const sourceUrl = URL.createObjectURL(file);
-  try {
-    const image = new window.Image();
-    image.src = sourceUrl;
-    await new Promise<void>((resolve, reject) => {
-      image.onload = () => resolve();
-      image.onerror = () => reject(new Error("Image could not be read"));
-    });
-    const outputSize = 700;
-    const canvas = document.createElement("canvas");
-    canvas.width = outputSize;
-    canvas.height = outputSize;
-    const context = canvas.getContext("2d");
-    if (!context) throw new Error("Image editor is unavailable");
-    const scale = Math.max(outputSize / image.width, outputSize / image.height) * zoom;
-    const renderedWidth = image.width * scale;
-    const renderedHeight = image.height * scale;
-    const left = (outputSize - renderedWidth) * (positionX / 100);
-    const top = (outputSize - renderedHeight) * (positionY / 100);
-    context.drawImage(image, left, top, renderedWidth, renderedHeight);
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
-    if (!blob) throw new Error("Image could not be prepared");
-    return new File([blob], "team-profile.jpg", { type: "image/jpeg" });
-  } finally {
-    URL.revokeObjectURL(sourceUrl);
-  }
-}
-
 export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUnauthorized: () => void }) {
   const [events, setEvents] = useState<SocietyEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -330,10 +301,6 @@ export function TeamManager({ notify, onUnauthorized }: { notify: Notify; onUnau
   const [bio, setBio] = useState("");
   const [displayOrder, setDisplayOrder] = useState("0");
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState("");
-  const [imageZoom, setImageZoom] = useState(1);
-  const [imagePositionX, setImagePositionX] = useState(50);
-  const [imagePositionY, setImagePositionY] = useState(50);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -375,10 +342,6 @@ export function TeamManager({ notify, onUnauthorized }: { notify: Notify; onUnau
     setBio("");
     setDisplayOrder("0");
     setImageFile(null);
-    setImagePreview("");
-    setImageZoom(1);
-    setImagePositionX(50);
-    setImagePositionY(50);
     const input = document.getElementById("member-image") as HTMLInputElement | null;
     if (input) input.value = "";
   }
@@ -391,18 +354,6 @@ export function TeamManager({ notify, onUnauthorized }: { notify: Notify; onUnau
     setBio(member.bio);
     setDisplayOrder(String(member.displayOrder));
     setImageFile(null);
-    setImagePreview("");
-    setImageZoom(1);
-    setImagePositionX(50);
-    setImagePositionY(50);
-  }
-
-  function selectImage(file: File | null) {
-    setImageFile(file);
-    setImagePreview(file ? URL.createObjectURL(file) : "");
-    setImageZoom(1);
-    setImagePositionX(50);
-    setImagePositionY(50);
   }
 
   function createNew() {
@@ -419,7 +370,7 @@ export function TeamManager({ notify, onUnauthorized }: { notify: Notify; onUnau
       form.set("role", role);
       form.set("bio", bio);
       form.set("displayOrder", displayOrder);
-      if (imageFile) form.set("image", await cropTeamImage(imageFile, imageZoom, imagePositionX, imagePositionY));
+      if (imageFile) form.set("image", imageFile);
       const response = await fetch(editing ? `/api/team/${editing.id}` : "/api/team", { method: editing ? "PUT" : "POST", body: form });
       const data = await response.json().catch(() => ({}));
       if (response.status === 401) return onUnauthorized();
@@ -466,23 +417,8 @@ export function TeamManager({ notify, onUnauthorized }: { notify: Notify; onUnau
           <label htmlFor="member-bio">Short bio</label>
           <textarea id="member-bio" maxLength={400} value={bio} onChange={(event) => setBio(event.target.value)} placeholder="Optional short introduction" />
           <label htmlFor="member-image">Profile image</label>
-          <input id="member-image" type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => selectImage(event.target.files?.[0] || null)} />
-          <span className="formHelp">PNG, JPEG, or WebP up to 4 MB. Adjust the crop below before saving.</span>
-          {imagePreview && (
-            <div className="teamImageEditor">
-              <div className="teamImageCropPreview" aria-label="Profile image crop preview">
-                <Image src={imagePreview} alt="Selected profile preview" fill unoptimized sizes="140px" style={{ transform: `translate(${(imagePositionX - 50) / 2}%, ${(imagePositionY - 50) / 2}%) scale(${imageZoom})` }} />
-              </div>
-              <div className="teamImageControls">
-                <label htmlFor="member-image-zoom">Zoom <output>{imageZoom.toFixed(1)}x</output></label>
-                <input id="member-image-zoom" type="range" min="1" max="3" step="0.1" value={imageZoom} onChange={(event) => setImageZoom(Number(event.target.value))} />
-                <label htmlFor="member-image-x">Horizontal position <output>{imagePositionX}%</output></label>
-                <input id="member-image-x" type="range" min="0" max="100" value={imagePositionX} onChange={(event) => setImagePositionX(Number(event.target.value))} />
-                <label htmlFor="member-image-y">Vertical position <output>{imagePositionY}%</output></label>
-                <input id="member-image-y" type="range" min="0" max="100" value={imagePositionY} onChange={(event) => setImagePositionY(Number(event.target.value))} />
-              </div>
-            </div>
-          )}
+          <input id="member-image" type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setImageFile(event.target.files?.[0] || null)} />
+          <span className="formHelp">PNG, JPEG, or WebP up to 4 MB. Leave empty while editing to keep the current image.</span>
           <div className="contentFormActions">
             <button className="secondary" type="button" onClick={reset}>Cancel</button>
             <button className="primary" type="submit" disabled={saving}>{saving ? "Saving..." : editing ? "Update Member" : "+ Add Member"}</button>
