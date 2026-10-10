@@ -11,8 +11,20 @@ function dateLabel(value: string) {
   return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}T00:00:00Z`));
 }
 
+type EventStatus = "upcoming" | "latest" | "previous";
+
+function eventStatus(value: string): EventStatus {
+  const eventTime = new Date(`${value}T00:00:00Z`).getTime();
+  const today = new Date();
+  const todayTime = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+  if (eventTime > todayTime) return "upcoming";
+  if (eventTime === todayTime) return "latest";
+  return "previous";
+}
+
 export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUnauthorized: () => void }) {
   const [events, setEvents] = useState<SocietyEvent[]>([]);
+  const [eventFilter, setEventFilter] = useState<"all" | EventStatus>("all");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -269,11 +281,20 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
           <div><div className="eyebrow">Event Library</div><h3>Published Events</h3></div>
           <div className="adminListActions"><span className="adminCount">{events.length}</span><button className="primary" type="button" onClick={createNew}>+ Add Event</button></div>
         </div>
+        <div className="eventFilter">
+          <label htmlFor="event-status-filter">Show events</label>
+          <select id="event-status-filter" value={eventFilter} onChange={(event) => setEventFilter(event.target.value as "all" | EventStatus)}>
+            <option value="all">All events</option>
+            <option value="upcoming">Upcoming</option>
+            <option value="latest">Latest</option>
+            <option value="previous">Previous</option>
+          </select>
+        </div>
         {loading ? <p className="adminEmpty">Loading events...</p> : events.length === 0 ? (
           <p className="adminEmpty">No events yet. The public Events page currently shows “Coming Soon”.</p>
         ) : (
           <div className="contentAdminList">
-            {events.map((item) => (
+            {events.filter((item) => eventFilter === "all" || eventStatus(item.eventDate) === eventFilter).map((item) => (
               <article key={item.id}>
                 <div className="contentThumb">{item.imageUrl ? <Image src={item.imageUrl} alt="" fill unoptimized loading="lazy" sizes="110px" /> : <span>EVENT</span>}</div>
                 <div className="contentAdminMeta"><strong>{item.title}</strong><span>{dateLabel(item.eventDate)}{item.location ? ` · ${item.location}` : ""}</span><p>{item.description}</p></div>
