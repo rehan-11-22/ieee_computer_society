@@ -2867,11 +2867,12 @@ footer{
 
 .siteBrandMark{
     display:block;
-  width:205px;
-  height:auto;
-  max-height:60px;
+  width:58px;
+  height:58px;
   flex:0 0 auto;
-  object-fit:contain;
+  object-fit:cover;
+  object-position:left center;
+  border-radius:50%;
 }
 
   .siteBrandText{
@@ -3753,7 +3754,7 @@ footer{
   .footerIeee{
   display:none;
   }
-  .footerBrandLogo img{width:190px;max-height:68px;object-fit:contain}
+  .footerBrandLogo img{width:86px;height:86px;object-fit:cover;object-position:left center;border-radius:50%}
   }
   
   @media(max-width:850px){
@@ -3934,9 +3935,12 @@ footer{
     }
 
   .siteBrandMark{
-  width:180px;
-  height:auto;
-  max-height:48px;
+  width:58px;
+  height:58px;
+  max-height:none;
+  object-fit:cover;
+  object-position:left center;
+  border-radius:50%;
   }
   .siteHeader .siteBrandText{
   display:none;

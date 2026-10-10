@@ -35,7 +35,7 @@ export default async function RootLayout({
       <div className="siteFooterMain">
         <div className="footerBrand">
           <Link className="footerBrandLogo" href="/">
-            <Image src="/images/ieee-cs-logo.png" alt="IEEE Society Superior University" width={310} height={110} />
+            <Image src="/images/ieee-neural-mark.png" alt="IEEE Society Superior University" width={310} height={110} />
           </Link>
           <p>Learn&nbsp; | &nbsp;Connect&nbsp; | &nbsp;Build the Future</p>
         </div>

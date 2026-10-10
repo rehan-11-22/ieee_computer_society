@@ -58,7 +58,7 @@ export default function CertificateView({ params }: { params: Promise<{ id: stri
             <div className="corner top"></div>
             <div className="corner bottom"></div>
             <div className="certTop">
-              <Image className="certificateSocietyLogo" src="/ieee-society-logo.jpg" alt="IEEE Society Superior University" width={218} height={103} />
+              <Image className="certificateSocietyLogo" src="/images/ieee-neural-mark.png" alt="IEEE Society Superior University" width={218} height={103} />
             </div>
 
             <div className="certBody">
