@@ -2867,17 +2867,17 @@ footer{
 
 .siteBrandMark{
     display:block;
-    width:52px;
-    height:52px;
-    flex:0 0 auto;
-    border-radius:50%;
-    object-fit:cover;
+  width:205px;
+  height:auto;
+  max-height:60px;
+  flex:0 0 auto;
+  object-fit:contain;
 }
 
-.siteBrandText{
-    display:block;
-    min-width:0;
-}
+  .siteBrandText{
+  display:none;
+  min-width:0;
+  }
 
 .siteHeader .siteBrandText strong{
     color:#0d2d52;
@@ -3750,12 +3750,13 @@ footer{
         grid-template-columns:1.2fr .8fr 1fr;
     }
 
-    .footerIeee{
-        display:none;
-    }
-}
-
-@media(max-width:850px){
+  .footerIeee{
+  display:none;
+  }
+  .footerBrandLogo img{width:190px;max-height:68px;object-fit:contain}
+  }
+  
+  @media(max-width:850px){
     .siteHeader{
         padding:0 18px;
     }
@@ -3905,10 +3906,18 @@ footer{
         border-top:1px solid #d9e4f0;
     }
 
-    .siteFooterMain{
-        grid-template-columns:1fr 1fr;
-    }
-}
+  .siteFooterMain{
+  grid-template-columns:1fr 1fr;
+  }
+  .footerBrandLogo img{width:min(100%,230px);max-height:76px;object-fit:contain}
+  .footerColumn{gap:9px}
+  }
+  
+  @media(max-width:560px){
+  .siteFooterMain{grid-template-columns:1fr;gap:26px}
+  .footerBrandLogo img{width:230px}
+  .footerBottom{align-items:flex-start;flex-direction:column;gap:10px}
+  }
 
 @media(max-width:560px){
     .teamDirectory{
@@ -3924,12 +3933,15 @@ footer{
         padding-right:12px;
     }
 
-    .siteBrandMark{
-        width:43px;
-        height:43px;
-    }
-
-    .siteHeader .siteBrandText strong{
+  .siteBrandMark{
+  width:180px;
+  height:auto;
+  max-height:48px;
+  }
+  .siteHeader .siteBrandText{
+  display:none;
+  }
+  .siteHeader .siteBrandText strong{
         max-width:none;
         font-size:14px;
     }

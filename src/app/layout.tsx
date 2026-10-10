@@ -35,7 +35,7 @@ export default async function RootLayout({
       <div className="siteFooterMain">
         <div className="footerBrand">
           <Link className="footerBrandLogo" href="/">
-            <Image src="/ieee-society-logo.jpg" alt="IEEE Society Superior University" width={210} height={99} />
+            <Image src="/images/ieee-cs-logo.png" alt="IEEE Society Superior University" width={310} height={110} />
           </Link>
           <p>Learn&nbsp; | &nbsp;Connect&nbsp; | &nbsp;Build the Future</p>
         </div>
@@ -46,14 +46,13 @@ export default async function RootLayout({
           <Link href="/events">Events</Link>
           <Link href="/team">Our Team</Link>
           <Link href="/contact">Contact</Link>
-          <Link href="/verify">Verification</Link>
+          <Link href="/verify">Verify Certificate</Link>
         </div>
         <div className="footerColumn footerContact">
           <strong>Contact</strong>
           <span><MapPin size={15} /> Superior University, Lahore</span>
           <a href="mailto:ieeecs@superior.edu.pk"><Mail size={15} /> ieeecs@superior.edu.pk</a>
         </div>
-        <a className="footerIeee" href="https://www.ieee.org" target="_blank" rel="noopener noreferrer">IEEE</a>
       </div>
       <div className="footerBottom">
         <span>© {new Date().getFullYear()} IEEE CS Superior University. All rights reserved.</span>
