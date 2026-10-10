@@ -17,6 +17,7 @@ interface EventDocument {
   imageSize?: number;
   createdAt: Date;
   updatedAt: Date;
+  pageSections?: import("@/lib/types").EventPageSection[];
 }
 
 interface TeamMemberDocument {
@@ -37,6 +38,7 @@ export interface EventInput {
   eventDate: string;
   location: string;
   section: EventSection;
+  pageSections: import("@/lib/types").EventPageSection[];
   image?: { data: Uint8Array; mimeType: ContentImageMimeType };
 }
 
@@ -76,7 +78,7 @@ function serializeEvent(document: WithId<EventDocument>): SocietyEvent {
     eventDate: document.eventDate,
     location: document.location,
     section: document.section || "upcoming",
-    pageSections: [],
+    pageSections: document.pageSections || [],
     ...(hasImage ? { imageUrl: `/api/events/${id}/image?v=${document.updatedAt.getTime()}` } : {}),
     createdAt: document.createdAt.toISOString(),
   };
@@ -131,6 +133,7 @@ export async function createEvent(input: EventInput): Promise<SocietyEvent> {
     eventDate: input.eventDate,
     location: input.location,
     section: input.section,
+    pageSections: input.pageSections,
     ...imageFields(input.image),
     createdAt: now,
     updatedAt: now,
@@ -145,7 +148,7 @@ export async function updateEvent(id: string, input: EventInput): Promise<Societ
   const collection = await eventCollection();
   const document = await collection.findOneAndUpdate(
     { _id },
-    { $set: { title: input.title, description: input.description, eventDate: input.eventDate, location: input.location, section: input.section, ...imageFields(input.image), updatedAt: new Date() } },
+    { $set: { title: input.title, description: input.description, eventDate: input.eventDate, location: input.location, section: input.section, pageSections: input.pageSections, ...imageFields(input.image), updatedAt: new Date() } },
     { returnDocument: "after" },
   );
   return document ? serializeEvent(document) : null;

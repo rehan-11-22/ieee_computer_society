@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import type { SocietyEvent, TeamMember } from "@/lib/types";
+import type { EventPageSection, SocietyEvent, TeamMember } from "@/lib/types";
 import { EventGalleryManager } from "@/components/EventGalleryManager";
 
 type Notify = (message: string, type?: "success" | "error" | "info") => void;
@@ -75,6 +75,7 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
   const [section, setSection] = useState<"upcoming" | "latest" | "previous">("upcoming");
   const [location, setLocation] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [pageSections, setPageSections] = useState<EventPageSection[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -116,6 +117,7 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
     setSection("upcoming");
     setLocation("");
     setImageFile(null);
+    setPageSections([]);
     const input = document.getElementById("event-image") as HTMLInputElement | null;
     if (input) input.value = "";
   }
@@ -128,6 +130,7 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
     setSection(event.section);
     setLocation(event.location);
     setImageFile(null);
+    setPageSections(event.pageSections || []);
   }
 
   async function save(event: FormEvent) {
@@ -140,6 +143,7 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
       form.set("eventDate", eventDate);
       form.set("section", section);
       form.set("location", location);
+      form.set("pageSections", JSON.stringify(pageSections));
       if (imageFile) form.set("image", imageFile);
       const response = await fetch(editing ? `/api/events/${editing.id}` : "/api/events", { method: editing ? "PUT" : "POST", body: form });
       const data = await response.json().catch(() => ({}));
@@ -189,6 +193,11 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
           <label htmlFor="event-image">Event image</label>
           <input id="event-image" type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setImageFile(event.target.files?.[0] || null)} />
           <span className="formHelp">PNG, JPEG, or WebP up to 4 MB. Leave empty while editing to keep the current image.</span>
+          <div className="eventPageBuilder">
+            <div className="adminListHead"><div><div className="eyebrow">Page Builder</div><h4>Event detail sections</h4></div><div><button type="button" className="secondary" onClick={() => setPageSections((items) => [...items, { id: crypto.randomUUID(), type: "content", heading: "", subheading: "", body: "", align: "left", headingColor: "#0f2f57", subheadingColor: "#2563eb", bodyColor: "#64748b" }])}>+ Content</button><button type="button" className="secondary" onClick={() => setPageSections((items) => [...items, { id: crypto.randomUUID(), type: "gallery", heading: "Event Gallery", layout: "grid" }])}>+ Gallery</button></div></div>
+            {pageSections.map((item, index) => <div className="eventBuilderBlock" key={item.id}><strong>{index + 1}. {item.type === "gallery" ? "Gallery" : "Content"}</strong>{item.type === "content" ? <><input value={item.heading} onChange={(e) => setPageSections((items) => items.map((section) => section.id === item.id && section.type === "content" ? { ...section, heading: e.target.value } : section))} placeholder="Section heading" /><textarea value={item.body} onChange={(e) => setPageSections((items) => items.map((section) => section.id === item.id && section.type === "content" ? { ...section, body: e.target.value } : section))} placeholder="Section text" /></> : <select value={item.layout} onChange={(e) => setPageSections((items) => items.map((section) => section.id === item.id && section.type === "gallery" ? { ...section, layout: e.target.value as "grid" | "carousel" } : section))}><option value="grid">Grid</option><option value="carousel">Carousel</option></select>}<button type="button" className="dangerButton" onClick={() => setPageSections((items) => items.filter((section) => section.id !== item.id))}>Remove</button></div>)}
+            <span className="formHelp">Build the detail page, then open the event after saving to review the public layout.</span>
+          </div>
           <div className="contentFormActions">
             {editing && <button className="secondary" type="button" onClick={reset}>Cancel</button>}
             <button className="primary" type="submit" disabled={saving}>{saving ? "Saving..." : editing ? "Update Event" : "+ Add Event"}</button>
