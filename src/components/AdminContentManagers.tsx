@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import type { SocietyEvent, TeamMember } from "@/lib/types";
+import { EventGalleryManager } from "@/components/EventGalleryManager";
 
 type Notify = (message: string, type?: "success" | "error" | "info") => void;
 
@@ -214,6 +215,14 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
           return <>{renderGroup("Upcoming Events", groups.upcoming)}{renderGroup("Latest Events", groups.latest)}{renderGroup("Previous Events", groups.previous)}</>;
         })()}
       </section>
+
+      {editing && (
+        <EventGalleryManager
+          eventId={editing.id}
+          notify={notify}
+          onUnauthorized={onUnauthorized}
+        />
+      )}
 
       {pendingDelete && <ConfirmDelete title="Delete Event?" description={`${pendingDelete.title} will be permanently removed.`} onCancel={() => setPendingDelete(null)} onConfirm={() => void remove()} />}
     </div>
