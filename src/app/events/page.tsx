@@ -54,10 +54,26 @@ export default async function EventsPage() {
 
   return (
     <main className="innerPage listingPage">
-      <section className="listingHero innerContainer">
-        <span className="sectionPill">Events & Activities</span>
-        <h1>Learn through <em>experience.</em></h1>
-        <p>Explore technical workshops, expert talks, leadership meetups, and community events by IEEE CS Superior University.</p>
+      <section className="aboutHero innerContainer">
+        <div className="innerHeroCopy">
+          <span className="sectionPill">Events & Activities</span>
+          <h1>Learn through <em>experience.</em></h1>
+          <p>Explore technical workshops, expert talks, leadership meetups, and community events by IEEE CS Superior University.</p>
+        </div>
+        <div className="innerHeroImage eventsHeroMedia">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="innerHeroVideo"
+          >
+            <source src="/events-video-h264.mp4" type="video/mp4" />
+            <source src="/events-video.mov" type="video/quicktime" />
+            <source src="/team-video-h264.mp4" type="video/mp4" />
+            <source src="/team-video.mov" type="video/quicktime" />
+          </video>
+        </div>
       </section>
 
       {events.length === 0 ? (
