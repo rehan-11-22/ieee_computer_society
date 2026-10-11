@@ -3667,11 +3667,13 @@ footer{
     background:linear-gradient(180deg, #091e38 0%, #051224 100%);
     border-top:1px solid rgba(56,189,248,.18);
     box-shadow:0 -16px 36px rgba(0,0,0,.22);
-    padding:56px max(5%,calc((100% - 1240px)/2)) 26px;
+    padding:56px 24px 26px;
     color:#e2e8f0;
 }
 
 .siteFooterMain{
+    max-width:1200px;
+    margin:0 auto;
     display:grid;
     grid-template-columns:1.5fr .95fr 1.05fr 1.35fr;
     gap:44px;
@@ -3878,6 +3880,8 @@ footer{
 }
 
 .footerBottom{
+    max-width:1200px;
+    margin:0 auto;
     padding-top:22px;
     display:flex;
     align-items:center;
@@ -3887,6 +3891,140 @@ footer{
     color:#64748b;
     flex-wrap:wrap;
 }
+
+/* ================= COLLABORATION TICKER (PATTI) ================= */
+
+.collabTickerSection{
+    position:relative;
+    width:100%;
+    background:#ffffff;
+    border-top:1px solid #e2e8f0;
+    border-bottom:1px solid #e2e8f0;
+    padding:32px 0 36px;
+    overflow:hidden;
+    display:block;
+}
+
+.collabTickerTrackWrapper{
+    width:100%;
+    overflow:hidden;
+    position:relative;
+    mask-image:linear-gradient(90deg, transparent 0%, black 6%, black 94%, transparent 100%);
+    -webkit-mask-image:linear-gradient(90deg, transparent 0%, black 6%, black 94%, transparent 100%);
+}
+
+.collabTickerTrack{
+    display:flex;
+    align-items:center;
+    gap:48px;
+    width:max-content;
+    animation:collabTickerScroll 26s linear infinite;
+    padding:6px 0;
+}
+
+.collabTickerTrack:hover{
+    animation-play-state:paused;
+}
+
+@keyframes collabTickerScroll{
+    0%{
+        transform:translateX(0);
+    }
+    100%{
+        transform:translateX(-25%);
+    }
+}
+
+.collabItemLink{
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    color:inherit;
+}
+
+.collabCircularCard{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    padding:8px 12px;
+    transition:transform .24s ease;
+    cursor:pointer;
+}
+
+.collabCircularCard:hover{
+    transform:translateY(-3px);
+}
+
+.collabCircleAvatar{
+    position:relative;
+    width:82px;
+    height:82px;
+    border-radius:50%;
+    background:#ffffff;
+    border:2.5px solid #e2e8f0;
+    box-shadow:0 6px 18px rgba(15,23,42,.08);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    transition:all .24s ease;
+    flex-shrink:0;
+}
+
+.collabCircularCard:hover .collabCircleAvatar{
+    border-color:#2563eb;
+    box-shadow:0 10px 24px rgba(37,99,235,.22);
+}
+
+.collabCircleImg{
+    object-fit:cover;
+    object-position:center;
+    border-radius:50%;
+}
+
+.collabInitialFallback{
+    font-size:22px;
+    font-weight:800;
+    color:#2563eb;
+    text-transform:uppercase;
+    letter-spacing:1px;
+}
+
+.collabUnderText{
+    font-size:13px;
+    font-weight:600;
+    color:#1e293b;
+    text-align:center;
+    white-space:nowrap;
+    max-width:140px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    transition:color .2s ease;
+}
+
+.collabCircularCard:hover .collabUnderText{
+    color:#2563eb;
+}
+
+@media(max-width:768px){
+    .collabTickerSection{
+        padding:24px 0 28px;
+    }
+    .collabCircleAvatar{
+        width:68px;
+        height:68px;
+    }
+    .collabUnderText{
+        font-size:12px;
+        max-width:120px;
+    }
+    .collabTickerTrack{
+        gap:36px;
+    }
+}
+
+
 
 .footerBottomLeft,
 .footerBottomRight{

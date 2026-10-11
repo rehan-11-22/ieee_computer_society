@@ -113,3 +113,13 @@ export interface EventGalleryImage {
   description?: string;
   createdAt: string;
 }
+
+export interface Collaboration {
+  id: string;
+  name: string;
+  websiteUrl?: string;
+  displayOrder: number;
+  imageUrl?: string;
+  createdAt: string;
+}
+

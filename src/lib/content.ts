@@ -2,7 +2,7 @@ import "server-only";
 
 import { Binary, ObjectId, type Collection, type WithId } from "mongodb";
 import { getDatabase } from "@/lib/mongodb";
-import type { SocietyEvent, TeamMember, EventGalleryImage, EventPageSection } from "@/lib/types";
+import type { SocietyEvent, TeamMember, EventGalleryImage, EventPageSection, Collaboration } from "@/lib/types";
 
 export type ContentImageMimeType = "image/png" | "image/jpeg" | "image/webp";
 
@@ -40,6 +40,17 @@ interface TeamMemberDocument {
   updatedAt: Date;
 }
 
+interface CollaborationDocument {
+  name: string;
+  websiteUrl?: string;
+  displayOrder: number;
+  image?: Binary;
+  imageMimeType?: ContentImageMimeType;
+  imageSize?: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface EventInput {
   title: string;
   description: string;
@@ -53,6 +64,13 @@ export interface TeamMemberInput {
   name: string;
   role: string;
   bio: string;
+  displayOrder: number;
+  image?: { data: Uint8Array; mimeType: ContentImageMimeType };
+}
+
+export interface CollaborationInput {
+  name: string;
+  websiteUrl?: string;
   displayOrder: number;
   image?: { data: Uint8Array; mimeType: ContentImageMimeType };
 }
@@ -78,8 +96,28 @@ async function teamCollection(): Promise<Collection<TeamMemberDocument>> {
   return collection;
 }
 
+async function collaborationCollection(): Promise<Collection<CollaborationDocument>> {
+  const database = await getDatabase();
+  const collection = database.collection<CollaborationDocument>("collaborations");
+  await collection.createIndex({ displayOrder: 1, createdAt: 1 });
+  return collection;
+}
+
 function objectId(value: string) {
   return ObjectId.isValid(value) ? new ObjectId(value) : null;
+}
+
+function serializeCollaboration(document: WithId<CollaborationDocument>): Collaboration {
+  const id = document._id.toHexString();
+  const hasImage = Boolean(document.image || (document.imageMimeType && document.imageSize));
+  return {
+    id,
+    name: document.name,
+    ...(document.websiteUrl ? { websiteUrl: document.websiteUrl } : {}),
+    displayOrder: document.displayOrder,
+    ...(hasImage ? { imageUrl: `/api/collaborations/${id}/image?v=${document.updatedAt.getTime()}` } : {}),
+    createdAt: document.createdAt.toISOString(),
+  };
 }
 
 function serializeEvent(document: WithId<EventDocument>): SocietyEvent {
@@ -228,6 +266,53 @@ export async function getTeamMemberImage(id: string) {
   const _id = objectId(id);
   if (!_id) return null;
   const document = await (await teamCollection()).findOne({ _id }, { projection: { image: 1, imageMimeType: 1, imageSize: 1 } });
+  if (!document?.image || !document.imageMimeType || !document.imageSize) return null;
+  return { data: new Uint8Array(document.image.value()), mimeType: document.imageMimeType, size: document.imageSize };
+}
+
+export async function listCollaborations(): Promise<Collaboration[]> {
+  const collection = await collaborationCollection();
+  const documents = await collection.find({}, { projection: { image: 0 } }).sort({ displayOrder: 1, createdAt: 1 }).toArray();
+  return documents.map((document) => serializeCollaboration(document as WithId<CollaborationDocument>));
+}
+
+export async function createCollaboration(input: CollaborationInput): Promise<Collaboration> {
+  const collection = await collaborationCollection();
+  const now = new Date();
+  const document: CollaborationDocument = {
+    name: input.name,
+    ...(input.websiteUrl ? { websiteUrl: input.websiteUrl } : {}),
+    displayOrder: input.displayOrder,
+    ...imageFields(input.image),
+    createdAt: now,
+    updatedAt: now,
+  };
+  const result = await collection.insertOne(document);
+  return serializeCollaboration({ ...document, _id: result.insertedId });
+}
+
+export async function updateCollaboration(id: string, input: CollaborationInput): Promise<Collaboration | null> {
+  const _id = objectId(id);
+  if (!_id) return null;
+  const collection = await collaborationCollection();
+  const document = await collection.findOneAndUpdate(
+    { _id },
+    { $set: { name: input.name, websiteUrl: input.websiteUrl, displayOrder: input.displayOrder, ...imageFields(input.image), updatedAt: new Date() } },
+    { returnDocument: "after" },
+  );
+  return document ? serializeCollaboration(document) : null;
+}
+
+export async function deleteCollaboration(id: string) {
+  const _id = objectId(id);
+  if (!_id) return false;
+  return (await (await collaborationCollection()).deleteOne({ _id })).deletedCount === 1;
+}
+
+export async function getCollaborationImage(id: string) {
+  const _id = objectId(id);
+  if (!_id) return null;
+  const document = await (await collaborationCollection()).findOne({ _id }, { projection: { image: 1, imageMimeType: 1, imageSize: 1 } });
   if (!document?.image || !document.imageMimeType || !document.imageSize) return null;
   return { data: new Uint8Array(document.image.value()), mimeType: document.imageMimeType, size: document.imageSize };
 }

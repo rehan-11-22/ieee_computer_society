@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { ContentImageMimeType, EventInput, TeamMemberInput } from "@/lib/content";
+import type { ContentImageMimeType, EventInput, TeamMemberInput, CollaborationInput } from "@/lib/content";
 import type { EventPageSection } from "@/lib/types";
 
 const MAX_IMAGE_SIZE = 4 * 1024 * 1024;
@@ -104,3 +104,28 @@ export async function parseTeamMemberForm(form: FormData): Promise<ParseResult<T
   }
   return { ok: true, value: { name: name.value, role: role.value, bio: bio.value, displayOrder, image: uploadedImage.value } };
 }
+
+export async function parseCollaborationForm(form: FormData): Promise<ParseResult<CollaborationInput>> {
+  const name = text(form, "name", "Partner Name", 100);
+  const websiteUrl = text(form, "websiteUrl", "Website Link", 300, false);
+  const rawOrder = text(form, "displayOrder", "Display order", 4);
+  const uploadedImage = await parseImage(form);
+  if (!name.ok) return name;
+  if (!websiteUrl.ok) return websiteUrl;
+  if (!rawOrder.ok) return rawOrder;
+  if (!uploadedImage.ok) return uploadedImage;
+  const displayOrder = Number.parseInt(rawOrder.value, 10);
+  if (!Number.isInteger(displayOrder) || displayOrder < 0 || displayOrder > 999) {
+    return { ok: false, error: "Display order must be between 0 and 999" };
+  }
+  return {
+    ok: true,
+    value: {
+      name: name.value,
+      websiteUrl: websiteUrl.value || undefined,
+      displayOrder,
+      image: uploadedImage.value,
+    },
+  };
+}
+

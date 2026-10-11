@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Code2, HeartHandshake, ShieldCheck, UsersRound } from "lucide-react";
 import { GalleryCarousel } from "@/components/Carousel";
+import { CollaborationTicker } from "@/components/CollaborationTicker";
 
 const impactCards = [
   {
@@ -118,6 +119,8 @@ export default function Home() {
           <div><strong>SUPERIOR UNIVERSITY</strong><span>Learn. Lead. Impact.</span></div>
         </div>
       </section>
+
+      <CollaborationTicker />
     </main>
   );
 }

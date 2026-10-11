@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { EventGalleryManager } from "@/components/EventGalleryManager";
-import type { EventPageSection, SocietyEvent, TeamMember } from "@/lib/types";
+import type { EventPageSection, SocietyEvent, TeamMember, Collaboration } from "@/lib/types";
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 
 type Notify = (message: string, type?: "success" | "error" | "info") => void;
@@ -485,3 +485,227 @@ function ConfirmDelete({ title, description, onCancel, onConfirm }: { title: str
     </div>
   );
 }
+
+export function CollaborationManager({ notify, onUnauthorized }: { notify: Notify; onUnauthorized: () => void }) {
+  const [collaborations, setCollaborations] = useState<Collaboration[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<Collaboration | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Collaboration | null>(null);
+  const [name, setName] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [displayOrder, setDisplayOrder] = useState("0");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/collaborations", { cache: "no-store" });
+      if (response.status === 401) return onUnauthorized();
+      const data = await response.json().catch(() => []);
+      if (!response.ok) return notify(data.error || "Collaborations could not be loaded", "error");
+      setCollaborations(data);
+    } catch {
+      notify("Network error while loading collaborations", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [notify, onUnauthorized]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  function reset() {
+    setName("");
+    setWebsiteUrl("");
+    setDisplayOrder("0");
+    setImageFile(null);
+    setEditing(null);
+    setShowForm(false);
+  }
+
+  function edit(item: Collaboration) {
+    setName(item.name);
+    setWebsiteUrl(item.websiteUrl || "");
+    setDisplayOrder(String(item.displayOrder));
+    setImageFile(null);
+    setEditing(item);
+    setShowForm(true);
+  }
+
+  function createNew() {
+    reset();
+    setShowForm(true);
+  }
+
+  async function save(event: FormEvent) {
+    event.preventDefault();
+    setSaving(true);
+    try {
+      const form = new FormData();
+      form.set("name", name);
+      form.set("websiteUrl", websiteUrl);
+      form.set("displayOrder", displayOrder);
+      if (imageFile) form.set("image", imageFile);
+      const response = await fetch(editing ? `/api/collaborations/${editing.id}` : "/api/collaborations", {
+        method: editing ? "PUT" : "POST",
+        body: form,
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 401) return onUnauthorized();
+      if (!response.ok) return notify(data.error || "Collaboration could not be saved", "error");
+      notify(editing ? "Collaboration updated successfully" : "Collaboration added successfully");
+      reset();
+      await load();
+    } catch {
+      notify("Network error while saving collaboration", "error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function remove() {
+    if (!pendingDelete) return;
+    try {
+      const response = await fetch(`/api/collaborations/${pendingDelete.id}`, { method: "DELETE" });
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 401) return onUnauthorized();
+      if (!response.ok) return notify(data.error || "Collaboration could not be deleted", "error");
+      notify("Collaboration deleted successfully");
+      setPendingDelete(null);
+      await load();
+    } catch {
+      notify("Network error while deleting collaboration", "error");
+    }
+  }
+
+  return (
+    <div className="contentManagement listOnly">
+      {showForm && (
+        <div className="contentEditorModal" role="presentation">
+          <section className="contentFormCard contentEditorPanel">
+            <div className="eyebrow">Collaboration Partner</div>
+            <h3>{editing ? "Edit Collaboration" : "Add Collaboration Partner"}</h3>
+            <p>Add a partner, sponsor, or affiliated society. Their logo will appear in the continuous scrolling marquee bar on the public website.</p>
+            <form className="contentAdminForm" onSubmit={save}>
+              <label htmlFor="collab-name">Partner / Organization Name</label>
+              <input
+                id="collab-name"
+                required
+                maxLength={100}
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="e.g. IEEE Lahore Section, Google DSC, MLSA..."
+              />
+              <div className="contentFormRow">
+                <div>
+                  <label htmlFor="collab-link">Website / Profile Link (Optional)</label>
+                  <input
+                    id="collab-link"
+                    type="url"
+                    maxLength={300}
+                    value={websiteUrl}
+                    onChange={(event) => setWebsiteUrl(event.target.value)}
+                    placeholder="https://example.com"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="collab-order">Display order</label>
+                  <input
+                    id="collab-order"
+                    type="number"
+                    min="0"
+                    max="999"
+                    required
+                    value={displayOrder}
+                    onChange={(event) => setDisplayOrder(event.target.value)}
+                  />
+                </div>
+              </div>
+              <label htmlFor="collab-image">Partner Logo / Picture</label>
+              <input
+                id="collab-image"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(event) => setImageFile(event.target.files?.[0] || null)}
+              />
+              <span className="formHelp">
+                {editing
+                  ? "PNG, JPEG, or WebP up to 4 MB. Leave empty to keep existing logo."
+                  : "Upload a clean logo (transparent PNG or JPEG recommended)."}
+              </span>
+              <div className="contentFormActions">
+                <button className="secondary" type="button" onClick={reset}>Cancel</button>
+                <button className="primary" type="submit" disabled={saving}>
+                  {saving ? "Saving..." : editing ? "Update Collaboration" : "+ Add Collaboration"}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
+
+      <section className="contentListCard">
+        <div className="adminListHead">
+          <div>
+            <div className="eyebrow">Partners &amp; Collaborators</div>
+            <h3>Active Collaborations</h3>
+          </div>
+          <div className="adminListActions">
+            <span className="adminCount">{collaborations.length}</span>
+            <button className="primary" type="button" onClick={createNew}>+ Add Partner</button>
+          </div>
+        </div>
+        {loading ? (
+          <p className="adminEmpty">Loading collaborations...</p>
+        ) : collaborations.length === 0 ? (
+          <p className="adminEmpty">
+            No collaboration partners added yet. When partners are added here, an automatic animated marquee bar will appear across the public website. If none are added, the bar remains hidden.
+          </p>
+        ) : (
+          <div className="contentAdminList">
+            {collaborations.map((item) => (
+              <article key={item.id}>
+                <div className="contentThumb" style={{ borderRadius: "8px", background: "#f1f5f9" }}>
+                  {item.imageUrl ? (
+                    <Image
+                      src={item.imageUrl}
+                      alt={item.name}
+                      fill
+                      unoptimized
+                      loading="lazy"
+                      sizes="80px"
+                      style={{ objectFit: "contain", padding: "6px" }}
+                    />
+                  ) : (
+                    <span>{item.name.slice(0, 2).toUpperCase()}</span>
+                  )}
+                </div>
+                <div className="contentAdminMeta">
+                  <strong>{item.name}</strong>
+                  <span>Order {item.displayOrder} {item.websiteUrl && <>&bull; <a href={item.websiteUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--blue)" }}>{item.websiteUrl}</a></>}</span>
+                </div>
+                <div className="contentAdminActions">
+                  <button className="tableAction" type="button" onClick={() => edit(item)}>Edit</button>
+                  <button className="tableAction tableDelete" type="button" onClick={() => setPendingDelete(item)}>Delete</button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {pendingDelete && (
+        <ConfirmDelete
+          title="Delete Collaboration?"
+          description={`${pendingDelete.name} will be removed and will no longer show in the public scrolling bar.`}
+          onCancel={() => setPendingDelete(null)}
+          onConfirm={() => void remove()}
+        />
+      )}
+    </div>
+  );
+}
+

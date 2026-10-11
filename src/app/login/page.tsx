@@ -9,6 +9,7 @@ import {
   ExternalLink,
   Eye,
   EyeOff,
+  Handshake,
   ImageIcon,
   LayoutDashboard,
   LogOut,
@@ -16,10 +17,10 @@ import {
   Users,
 } from "lucide-react";
 import { Toast, type ToastMessage } from "@/components/Toast";
-import { EventManager, TeamManager } from "@/components/AdminContentManagers";
+import { EventManager, TeamManager, CollaborationManager } from "@/components/AdminContentManagers";
 import { CertificateTemplateEditor } from "@/components/CertificateTemplateEditor";
 
-type AdminPanelName = "certificates" | "events" | "team" | "templates" | "admins";
+type AdminPanelName = "certificates" | "events" | "team" | "collaborations" | "templates" | "admins";
 const CUSTOM_EVENT_VALUE = "__custom__";
 
 const panelCopy: Record<AdminPanelName, { title: string; description: string }> = {
@@ -34,6 +35,10 @@ const panelCopy: Record<AdminPanelName, { title: string; description: string }> 
   team: {
     title: "Team Management",
     description: "Manage the members displayed on the Society and Team pages.",
+  },
+  collaborations: {
+    title: "Collaborations & Partners",
+    description: "Manage sponsor and partner logos shown in the animated ticker bar on the website.",
   },
   templates: {
     title: "Certificate Templates",
@@ -660,6 +665,9 @@ export default function AdminPage() {
           <button type="button" className={activePanel === "team" ? "active" : ""} onClick={() => setActivePanel("team")}>
             <Users size={18} /><span>Team</span>
           </button>
+          <button type="button" className={activePanel === "collaborations" ? "active" : ""} onClick={() => setActivePanel("collaborations")}>
+            <Handshake size={18} /><span>Collaborations</span>
+          </button>
           <button type="button" className={activePanel === "templates" ? "active" : ""} onClick={() => void openTemplatesPanel()}>
             <ImageIcon size={18} /><span>Templates</span>
           </button>
@@ -990,8 +998,10 @@ export default function AdminPage() {
           </div>
         ) : activePanel === "events" ? (
           <EventManager notify={showToast} onUnauthorized={() => setAuthState("login")} />
-        ) : (
+        ) : activePanel === "team" ? (
           <TeamManager notify={showToast} onUnauthorized={() => setAuthState("login")} />
+        ) : (
+          <CollaborationManager notify={showToast} onUnauthorized={() => setAuthState("login")} />
         )}
         </div>
       </section>
