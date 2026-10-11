@@ -75,31 +75,39 @@ export interface CollaborationInput {
   image?: { data: Uint8Array; mimeType: ContentImageMimeType };
 }
 
+let eventSetupPromise: Promise<void> | undefined;
 async function eventCollection(): Promise<Collection<EventDocument>> {
   const database = await getDatabase();
   const collection = database.collection<EventDocument>("society_events");
-  await collection.createIndex({ eventDate: -1, createdAt: -1 });
+  eventSetupPromise ??= collection.createIndex({ eventDate: -1, createdAt: -1 }).then(() => undefined).catch(() => undefined);
+  await eventSetupPromise;
   return collection;
 }
 
+let gallerySetupPromise: Promise<void> | undefined;
 async function eventGalleryCollection(): Promise<Collection<EventGalleryDocument>> {
   const database = await getDatabase();
   const collection = database.collection<EventGalleryDocument>("event_gallery");
-  await collection.createIndex({ eventId: 1, createdAt: -1 });
+  gallerySetupPromise ??= collection.createIndex({ eventId: 1, createdAt: -1 }).then(() => undefined).catch(() => undefined);
+  await gallerySetupPromise;
   return collection;
 }
 
+let teamSetupPromise: Promise<void> | undefined;
 async function teamCollection(): Promise<Collection<TeamMemberDocument>> {
   const database = await getDatabase();
   const collection = database.collection<TeamMemberDocument>("team_members");
-  await collection.createIndex({ displayOrder: 1, createdAt: 1 });
+  teamSetupPromise ??= collection.createIndex({ displayOrder: 1, createdAt: 1 }).then(() => undefined).catch(() => undefined);
+  await teamSetupPromise;
   return collection;
 }
 
+let collabSetupPromise: Promise<void> | undefined;
 async function collaborationCollection(): Promise<Collection<CollaborationDocument>> {
   const database = await getDatabase();
   const collection = database.collection<CollaborationDocument>("collaborations");
-  await collection.createIndex({ displayOrder: 1, createdAt: 1 });
+  collabSetupPromise ??= collection.createIndex({ displayOrder: 1, createdAt: 1 }).then(() => undefined).catch(() => undefined);
+  await collabSetupPromise;
   return collection;
 }
 

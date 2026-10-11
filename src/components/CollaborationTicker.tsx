@@ -1,8 +1,6 @@
 import Image from "next/image";
 import { listCollaborations } from "@/lib/content";
 
-export const dynamic = "force-dynamic";
-
 export async function CollaborationTicker() {
   const collaborations = await listCollaborations();
 

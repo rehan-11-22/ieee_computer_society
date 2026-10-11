@@ -2,7 +2,7 @@ import Image from "next/image";
 import { Award, HeartHandshake, Sparkles, UsersRound } from "lucide-react";
 import { listTeamMembers } from "@/lib/content";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 export default async function TeamPage() {
   const team = await listTeamMembers();

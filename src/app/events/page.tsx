@@ -3,7 +3,7 @@ import Link from "next/link";
 import { CalendarDays, ChevronRight, MapPin, Sparkles } from "lucide-react";
 import { listEvents } from "@/lib/content";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 function displayDate(value: string) {
   return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}T00:00:00Z`));
@@ -66,12 +66,10 @@ export default async function EventsPage() {
             loop
             muted
             playsInline
+            preload="metadata"
             className="innerHeroVideo"
           >
-            <source src="/events-video-h264.mp4" type="video/mp4" />
-            <source src="/events-video.mov" type="video/quicktime" />
-            <source src="/team-video-h264.mp4" type="video/mp4" />
-            <source src="/team-video.mov" type="video/quicktime" />
+            <source src="/events-video.mp4" type="video/mp4" />
           </video>
         </div>
       </section>

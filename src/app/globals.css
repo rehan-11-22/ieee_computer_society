@@ -5086,9 +5086,8 @@ footer{
     width:218px;
     max-width:100%;
     height:auto;
-    padding:5px 7px;
-    border-radius:8px;
-    background:white;
+    padding:0;
+    background:transparent;
     object-fit:contain;
 }
 
