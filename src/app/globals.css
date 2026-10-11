@@ -1528,15 +1528,20 @@ th{
     margin-top:4px;
 }
 
-.adminForm input{
-    width:100%;
-    padding:13px 14px;
-    border:1px solid #d7e0eb;
-    border-radius:9px;
-    outline:none;
-}
-
-.adminForm input:focus{
+  .adminForm input{
+  width:100%;
+  padding:13px 14px;
+  border:1px solid #d7e0eb;
+  border-radius:9px;
+  outline:none;
+  }
+  .credentialInputWrap{position:relative;display:flex;align-items:center}
+  .credentialInputWrap input{padding-right:42px;width:100%}
+  .credentialViewButton{position:absolute;right:8px;display:grid;place-items:center;border:0;background:transparent;color:var(--muted);cursor:pointer;padding:6px}
+  .credentialViewButton:hover{color:var(--blue)}
+  .credentialSecurityNote{margin:0;color:var(--muted);font-size:11px;line-height:1.5}
+  
+  .adminForm input:focus{
     border-color:var(--blue);
     box-shadow:0 0 0 3px #eaf2ff;
 }

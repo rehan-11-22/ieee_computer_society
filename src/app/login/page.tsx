@@ -7,6 +7,8 @@ import {
   Award,
   CalendarDays,
   ExternalLink,
+  Eye,
+  EyeOff,
   ImageIcon,
   LayoutDashboard,
   LogOut,
@@ -79,6 +81,8 @@ export default function AdminPage() {
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [adminPasswordConfirm, setAdminPasswordConfirm] = useState("");
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
+  const [showAdminPasswordConfirm, setShowAdminPasswordConfirm] = useState(false);
   const [adminFormError, setAdminFormError] = useState("");
   const [adminFormLoading, setAdminFormLoading] = useState(false);
   const [showAdminCreate, setShowAdminCreate] = useState(false);
@@ -369,6 +373,8 @@ export default function AdminPage() {
     setAdminEmail("");
     setAdminPassword("");
     setAdminPasswordConfirm("");
+    setShowAdminPassword(false);
+    setShowAdminPasswordConfirm(false);
     setAdminFormError("");
     setShowAdminCreate(true);
   }
@@ -378,6 +384,8 @@ export default function AdminPage() {
     setAdminEmail(admin.email);
     setAdminPassword("");
     setAdminPasswordConfirm("");
+    setShowAdminPassword(false);
+    setShowAdminPasswordConfirm(false);
     setAdminFormError("");
     setShowAdminCreate(true);
   }
@@ -906,26 +914,37 @@ export default function AdminPage() {
                   onChange={(event) => setAdminEmail(event.target.value)}
                   placeholder="admin@example.com"
                 />
-                <label htmlFor="admin-password">{editingAdmin ? "New password" : "Password"}</label>
-                <input
-                  id="admin-password"
-                  type="password"
-                  required={!editingAdmin}
-                  minLength={10}
-                  value={adminPassword}
-                  onChange={(event) => setAdminPassword(event.target.value)}
-                  placeholder={editingAdmin ? "Leave blank to keep current password" : "At least 10 characters"}
-                />
-                <label htmlFor="admin-password-confirm">Confirm password</label>
-                <input
-                  id="admin-password-confirm"
-                  type="password"
-                  required={!editingAdmin || Boolean(adminPassword)}
-                  minLength={10}
-                  value={adminPasswordConfirm}
-                  onChange={(event) => setAdminPasswordConfirm(event.target.value)}
-                  placeholder={editingAdmin ? "Confirm new password if changing it" : "Re-enter password"}
-                />
+  <label htmlFor="admin-password">{editingAdmin ? "New password" : "Password"}</label>
+  <div className="credentialInputWrap">
+    <input
+    id="admin-password"
+    type={showAdminPassword ? "text" : "password"}
+    required={!editingAdmin}
+    minLength={10}
+    value={adminPassword}
+    onChange={(event) => setAdminPassword(event.target.value)}
+    placeholder={editingAdmin ? "Leave blank to keep current password" : "At least 10 characters"}
+    />
+    <button className="credentialViewButton" type="button" onClick={() => setShowAdminPassword((visible) => !visible)} aria-label={showAdminPassword ? "Hide password" : "Show password"}>
+      {showAdminPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+    </button>
+  </div>
+  <label htmlFor="admin-password-confirm">Confirm password</label>
+  <div className="credentialInputWrap">
+    <input
+    id="admin-password-confirm"
+    type={showAdminPasswordConfirm ? "text" : "password"}
+    required={!editingAdmin || Boolean(adminPassword)}
+    minLength={10}
+    value={adminPasswordConfirm}
+    onChange={(event) => setAdminPasswordConfirm(event.target.value)}
+    placeholder={editingAdmin ? "Confirm new password if changing it" : "Re-enter password"}
+    />
+    <button className="credentialViewButton" type="button" onClick={() => setShowAdminPasswordConfirm((visible) => !visible)} aria-label={showAdminPasswordConfirm ? "Hide password confirmation" : "Show password confirmation"}>
+      {showAdminPasswordConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+    </button>
+  </div>
+  <p className="credentialSecurityNote">For security, the existing password cannot be viewed. Leave it blank to keep it unchanged, or enter a new password to reset it.</p>
                 <button className="primary" type="submit" disabled={adminFormLoading}>
                   {adminFormLoading ? "Saving..." : editingAdmin ? "Update Admin" : "+ Create Admin"}
                 </button>
