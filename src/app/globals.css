@@ -4282,6 +4282,17 @@ footer{
         width:calc(100% - 32px);
     }
 
+    .listingPage .innerHeroCopy{
+        text-align:center;
+        align-items:center;
+    }
+
+    .listingPage .innerHeroCopy h1,
+    .listingPage .innerHeroCopy p{
+        margin-left:auto;
+        margin-right:auto;
+    }
+
     .innerHeroCopy h1,
     .listingHero h1{
         font-size:42px;
