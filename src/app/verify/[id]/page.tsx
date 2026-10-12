@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, BadgeCheck, Eye, RotateCcw, SearchX } from "lucide-react";
 import type { Certificate } from "@/lib/types";
@@ -10,6 +10,7 @@ export default function VerifyResult({ params }: { params: Promise<{ id: string 
   const resolvedParams = use(params);
   const [cert, setCert] = useState<Certificate | null>(null);
   const [loading, setLoading] = useState(true);
+  const viewCertificateRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     fetch(`/api/certificates/${encodeURIComponent(resolvedParams.id)}`)
@@ -25,6 +26,15 @@ export default function VerifyResult({ params }: { params: Promise<{ id: string 
   }, [resolvedParams.id]);
 
   const isValid = cert?.status === "Valid";
+
+  useEffect(() => {
+    if (loading || !cert || !isValid) return;
+    const timer = window.setTimeout(() => {
+      viewCertificateRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      viewCertificateRef.current?.focus({ preventScroll: true });
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [loading, cert, isValid]);
 
   return (
     <main className="verifyPortalPage">
@@ -64,7 +74,7 @@ export default function VerifyResult({ params }: { params: Promise<{ id: string 
               </div>
             </div>
             <div className="verificationRecordActions">
-              <Link className="primary" href={`/certificate/${cert.credentialId}`}><Eye size={17} /> View Full Certificate</Link>
+              <Link ref={viewCertificateRef} className="primary" href={`/certificate/${cert.credentialId}`}><Eye size={17} /> View Full Certificate</Link>
             </div>
           </article>
         ) : cert ? (
