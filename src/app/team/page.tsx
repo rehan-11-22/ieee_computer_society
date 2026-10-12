@@ -1,72 +1,83 @@
 import Image from "next/image";
-import { Award, HeartHandshake, Sparkles, UsersRound } from "lucide-react";
-import { listTeamMembers } from "@/lib/content";
+import Link from "next/link";
+import {
+  ArrowRight,
+  CalendarCheck2,
+  Camera,
+  Megaphone,
+  MessagesSquare,
+  UsersRound,
+} from "lucide-react";
+import { listPublicTeamMembers } from "@/lib/public-content";
+import { TEAM_CATEGORIES } from "@/lib/team-categories";
 
 export const revalidate = 30;
 
+const categoryIcons = {
+  "executive-body": UsersRound,
+  "marketing-team": Megaphone,
+  "communication-team": MessagesSquare,
+  "event-management-team": CalendarCheck2,
+  "media-team": Camera,
+};
+
 export default async function TeamPage() {
-  const team = await listTeamMembers();
+  const members = await listPublicTeamMembers();
 
   return (
-    <main className="innerPage listingPage">
-      <section className="aboutHero innerContainer">
-        <div className="innerHeroCopy">
-          <span className="sectionPill">Our Leadership</span>
-          <h1>Meet the people who <em>make it happen.</em></h1>
-          <p>Student leaders and faculty mentors working together to create valuable opportunities for our community.</p>
+    <main className="innerPage teamLandingPage">
+      <section className="teamLandingHero innerContainer">
+        <div className="teamLandingCopy">
+          <span className="sectionPill">Our Team</span>
+          <h1>Meet the people<br />who <em>make it happen.</em></h1>
+          <p>A group of passionate students working together to create opportunities, build a stronger community, and drive technological growth at Superior University through IEEE Computer Society.</p>
         </div>
-        <div className="innerHeroImage">
+        <div className="teamLandingHeroImage">
           <Image
-            src="/contact_hero.jpeg"
-            alt="IEEE Computer Society Superior University Team"
+            src="/team_hero.jpeg"
+            alt="IEEE Computer Society Superior University team"
             fill
             priority
-            sizes="(max-width: 850px) 100vw, 50vw"
+            sizes="(max-width: 850px) 100vw, 54vw"
             style={{ objectFit: "cover" }}
           />
         </div>
       </section>
 
-      {team.length === 0 ? (
-        <section className="publicEmptyState innerContainer">
-          <span><Sparkles size={34} /></span>
-          <h2>Team Announcement Coming Soon</h2>
-          <p>Our new executive body will be introduced here soon.</p>
-        </section>
-      ) : (
-        <section className="teamDirectory innerContainer">
-          <div className="teamDirectoryHeading">
-            <h2>Executive Body 2026</h2>
-          </div>
-          <div className="teamPageGrid">
-            {team.map((member) => (
-              <article key={member.id}>
-                <span className={`teamMemberPhoto${member.imageUrl ? " hasImage" : ""}`}>
-                  {member.imageUrl ? (
-                    <Image
-                      src={member.imageUrl}
-                      alt={member.name}
-                      fill
-                      unoptimized
-                      loading="lazy"
-                      sizes="108px"
-                      style={{ objectFit: "cover", objectPosition: "center top" }}
-                    />
-                  ) : member.name.slice(0, 2).toUpperCase()}
+      <section className="teamCategorySection innerContainer" aria-labelledby="team-category-title">
+        <div className="teamCategoryIntro">
+          <span>Explore our departments</span>
+          <h2 id="team-category-title">Find the team behind every initiative</h2>
+        </div>
+        <div className="teamCategoryGrid">
+          {TEAM_CATEGORIES.map((category, index) => {
+            const Icon = categoryIcons[category.slug];
+            const memberCount = members.filter((member) => member.category === category.slug).length;
+            return (
+              <Link
+                key={category.slug}
+                href={`/team/${category.slug}`}
+                className={`teamCategoryCard${index === 0 ? " featured" : ""}`}
+              >
+                <Image
+                  src={category.image}
+                  alt=""
+                  fill
+                  loading="lazy"
+                  sizes="(max-width: 560px) 100vw, (max-width: 1000px) 33vw, 20vw"
+                  className="teamCategoryCardImage"
+                />
+                <span className="teamCategoryCardOverlay" />
+                <span className="teamCategoryCardIcon"><Icon size={24} /></span>
+                <span className="teamCategoryCardContent">
+                  <strong>{category.cardTitle}</strong>
+                  <small>{memberCount} {memberCount === 1 ? "Member" : "Members"}</small>
                 </span>
-                <h2>{member.name}</h2>
-                <p>{member.role}</p>
-                {member.bio && <small>{member.bio}</small>}
-              </article>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section className="teamValues innerContainer">
-        <article><UsersRound size={28} /><h2>Collaboration</h2><p>Working together with trust and shared purpose.</p></article>
-        <article><Award size={28} /><h2>Excellence</h2><p>Leading every activity with quality and responsibility.</p></article>
-        <article><HeartHandshake size={28} /><h2>Service</h2><p>Creating opportunities that support the whole community.</p></article>
+                <span className="teamCategoryCardArrow"><ArrowRight size={22} /></span>
+              </Link>
+            );
+          })}
+        </div>
       </section>
     </main>
   );

@@ -54,6 +54,7 @@ export type CertificateTemplateFieldKey =
   | "issuingOrganization";
 
 export interface CertificateTemplateFieldLayout {
+  enabled: boolean;
   x: number;
   y: number;
   width: number;
@@ -101,10 +102,34 @@ export interface TeamMember {
   name: string;
   role: string;
   bio: string;
+  category: TeamCategory;
   displayOrder: number;
   imageUrl?: string;
   createdAt: string;
 }
+
+export interface LeadershipMember {
+  id: string;
+  name: string;
+  role: string;
+  tenure: string;
+  displayOrder: number;
+  imageUrl?: string;
+  createdAt: string;
+}
+
+export interface ContactSettings {
+  phoneNumber: string;
+  whatsappUrl: string;
+  updatedAt?: string;
+}
+
+export type TeamCategory =
+  | "executive-body"
+  | "marketing-team"
+  | "communication-team"
+  | "event-management-team"
+  | "media-team";
 
 export interface EventGalleryImage {
   id: string;
@@ -122,4 +147,3 @@ export interface Collaboration {
   imageUrl?: string;
   createdAt: string;
 }
-

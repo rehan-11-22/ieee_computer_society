@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const navigation = [
   { href: "/", label: "Home" },
@@ -14,9 +14,23 @@ const navigation = [
   { href: "/contact", label: "Contact" },
 ];
 
-export function SiteHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
+export function SiteHeader() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    fetch("/api/auth/me", { cache: "no-store", signal: controller.signal })
+      .then((response) => setIsLoggedIn(response.ok))
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setIsLoggedIn(false);
+      });
+
+    return () => controller.abort();
+  }, []);
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 

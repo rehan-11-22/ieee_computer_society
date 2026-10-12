@@ -1,23 +1,19 @@
 import Image from "next/image";
-import Link from "next/link";
 import {
-  ArrowRight,
   BarChart3,
   BrainCircuit,
-  CalendarDays,
   Cloud,
   Code2,
   Cog,
   HeartHandshake,
   Medal,
   ShieldCheck,
-  Sparkles,
   Target,
   UsersRound,
 } from "lucide-react";
-import { listEvents, listTeamMembers } from "@/lib/content";
+import { listPublicLeadershipMembers } from "@/lib/public-content";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 const values = [
   { icon: Code2, title: "Technical Events", text: "Workshops, talks, and hands-on learning sessions." },
@@ -35,10 +31,7 @@ const focusAreas = [
 ];
 
 export default async function AboutPage() {
-  const [leaders, eventCards] = await Promise.all([listTeamMembers(), listEvents()]);
-  const featuredLeaders = leaders.slice(0, 6);
-  const featuredEvents = eventCards.slice(0, 3);
-
+  const leadership = await listPublicLeadershipMembers();
   return (
     <main className="innerPage aboutPage">
       <section className="aboutHero innerContainer">
@@ -98,30 +91,29 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      <section className="leadershipSection innerContainer" id="leadership" style={{ marginTop: '55px' }}>
-        <span className="sectionPill" style={{ display: 'inline-block', marginBottom: '15px' }}>Our Leadership</span>
-        <div className="customLeaderGrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-          <article className="leaderCard customLeaderCard" style={{ display: 'flex', alignItems: 'center', gap: '20px', padding: '20px', textAlign: 'left', background: '#f5f8fc', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-            <span style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#eaf2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb', flexShrink: 0 }}>
-              <UsersRound size={28} />
-            </span>
-            <div>
-              <h3 style={{ fontSize: '18px', color: '#102c50', marginBottom: '4px' }}>Dr. Hamayun Khan</h3>
-              <p style={{ color: '#68778c', fontSize: '13px', margin: 0 }}>Faculty Advisor</p>
-              <p style={{ color: '#68778c', fontSize: '13px', margin: 0 }}>Advisor Since 2021</p>
-            </div>
-          </article>
-          <article className="leaderCard customLeaderCard" style={{ display: 'flex', alignItems: 'center', gap: '20px', padding: '20px', textAlign: 'left', background: '#f5f8fc', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-            <span style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#eaf2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb', flexShrink: 0 }}>
-              <UsersRound size={28} />
-            </span>
-            <div>
-              <h3 style={{ fontSize: '18px', color: '#102c50', marginBottom: '4px' }}>M. Ahmad Kashif</h3>
-              <p style={{ color: '#68778c', fontSize: '13px', margin: 0 }}>Current President</p>
-              <p style={{ color: '#68778c', fontSize: '13px', margin: 0 }}>Leading Since 2025</p>
-            </div>
-          </article>
-        </div>
+      <section className="leadershipSection innerContainer" id="leadership">
+        <span className="sectionPill">Our Leadership</span>
+        <h2>Guiding Our Student Community</h2>
+        {leadership.length === 0 ? (
+          <div className="leadershipEmpty"><UsersRound size={28} /><p>Leadership profiles will be published soon.</p></div>
+        ) : (
+          <div className="customLeaderGrid">
+            {leadership.map((member) => (
+              <article className="leaderCard customLeaderCard" key={member.id}>
+                <div className={`leadershipPortrait${member.imageUrl ? " hasImage" : ""}`}>
+                  {member.imageUrl ? (
+                    <Image src={member.imageUrl} alt={`${member.name}, ${member.role}`} fill unoptimized loading="lazy" sizes="(max-width: 640px) 72vw, 240px" />
+                  ) : <UsersRound size={42} />}
+                </div>
+                <div className="leadershipDetails">
+                  <h3>{member.name}</h3>
+                  <p>{member.role}</p>
+                  <small>{member.tenure}</small>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="societyImpact">

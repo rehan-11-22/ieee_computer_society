@@ -1,5 +1,6 @@
 "use client";
 
+import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import type {
   CertificateTemplate,
@@ -42,6 +43,7 @@ export function CertificateTemplateEditor({
   const [selectedField, setSelectedField] = useState<CertificateTemplateFieldKey>("recipientName");
   const [saving, setSaving] = useState(false);
   const selected = layout.fields[selectedField];
+  const visibleFieldCount = CERTIFICATE_TEMPLATE_FIELD_KEYS.filter((key) => layout.fields[key].enabled).length;
 
   function updateSelected(patch: Partial<CertificateTemplateLayout["fields"][CertificateTemplateFieldKey]>) {
     setLayout((current) => ({
@@ -92,7 +94,7 @@ export function CertificateTemplateEditor({
           <div>
             <div className="eyebrow">Template Layout Editor</div>
             <h2 id="template-editor-title">{template.name}</h2>
-            <p>Drag a field on the preview, then fine-tune its position and styling.</p>
+            <p>Position the fields you need and remove any text that is already printed on the uploaded template.</p>
           </div>
           <button className="close" type="button" onClick={onClose} aria-label="Close template editor">×</button>
         </div>
@@ -115,32 +117,51 @@ export function CertificateTemplateEditor({
             <label htmlFor="layout-field">Editing field</label>
             <select id="layout-field" value={selectedField} onChange={(event) => setSelectedField(event.target.value as CertificateTemplateFieldKey)}>
               {CERTIFICATE_TEMPLATE_FIELD_KEYS.map((key) => (
-                <option value={key} key={key}>{CERTIFICATE_TEMPLATE_FIELD_LABELS[key]}</option>
+                <option value={key} key={key}>{CERTIFICATE_TEMPLATE_FIELD_LABELS[key]}{layout.fields[key].enabled ? "" : " (removed)"}</option>
               ))}
             </select>
+
+            <div className={`layoutFieldVisibility${selected.enabled ? "" : " removed"}`}>
+              <div>
+                {selected.enabled ? <Eye size={18} /> : <EyeOff size={18} />}
+                <span>
+                  <strong>{selected.enabled ? "Shown on certificate" : "Removed from certificate"}</strong>
+                  <small>{visibleFieldCount} of {CERTIFICATE_TEMPLATE_FIELD_KEYS.length} dynamic fields enabled</small>
+                </span>
+              </div>
+              <button
+                type="button"
+                className={selected.enabled ? "layoutRemoveField" : "layoutRestoreField"}
+                onClick={() => updateSelected({ enabled: !selected.enabled })}
+              >
+                {selected.enabled ? "Remove this field" : "Add field back"}
+              </button>
+            </div>
+
+            {!selected.enabled && <p className="layoutRemovedHelp">This field will not appear in the website preview or downloaded PDF. Its position is preserved in case you add it back later.</p>}
 
             <div className="layoutControlGrid">
               <label>
                 <span>Horizontal <strong>{selected.x}%</strong></span>
-                <input type="range" min="0" max="100" step="0.5" value={selected.x} onChange={(event) => updateSelected({ x: Number(event.target.value) })} />
+                <input disabled={!selected.enabled} type="range" min="0" max="100" step="0.5" value={selected.x} onChange={(event) => updateSelected({ x: Number(event.target.value) })} />
               </label>
               <label>
                 <span>Vertical <strong>{selected.y}%</strong></span>
-                <input type="range" min="0" max="100" step="0.5" value={selected.y} onChange={(event) => updateSelected({ y: Number(event.target.value) })} />
+                <input disabled={!selected.enabled} type="range" min="0" max="100" step="0.5" value={selected.y} onChange={(event) => updateSelected({ y: Number(event.target.value) })} />
               </label>
               <label>
                 <span>Max width <strong>{selected.width}%</strong></span>
-                <input type="range" min="10" max="100" step="1" value={selected.width} onChange={(event) => updateSelected({ width: Number(event.target.value) })} />
+                <input disabled={!selected.enabled} type="range" min="10" max="100" step="1" value={selected.width} onChange={(event) => updateSelected({ width: Number(event.target.value) })} />
               </label>
               <label>
                 <span>Font size <strong>{selected.fontSize}px</strong></span>
-                <input type="range" min="6" max="60" step="1" value={selected.fontSize} onChange={(event) => updateSelected({ fontSize: Number(event.target.value) })} />
+                <input disabled={!selected.enabled} type="range" min="6" max="60" step="1" value={selected.fontSize} onChange={(event) => updateSelected({ fontSize: Number(event.target.value) })} />
               </label>
             </div>
 
             <label className="layoutColorControl">
               <span>Text color</span>
-              <input type="color" value={selected.color} onChange={(event) => updateSelected({ color: event.target.value })} />
+              <input disabled={!selected.enabled} type="color" value={selected.color} onChange={(event) => updateSelected({ color: event.target.value })} />
               <code>{selected.color}</code>
             </label>
 
@@ -156,7 +177,7 @@ export function CertificateTemplateEditor({
 
             <div className="templateEditorActions">
               <button type="button" className="secondary" onClick={() => setLayout(cloneCertificateTemplateLayout(DEFAULT_CERTIFICATE_TEMPLATE_LAYOUT))}>Reset Layout</button>
-              <button type="button" className="primary" disabled={saving} onClick={() => void saveLayout()}>{saving ? "Saving..." : "Save Layout"}</button>
+              <button type="button" className="primary" disabled={saving} onClick={() => void saveLayout()}>{saving ? "Saving..." : "Save & Done"}</button>
             </div>
           </aside>
         </div>

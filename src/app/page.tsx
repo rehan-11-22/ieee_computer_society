@@ -4,6 +4,8 @@ import { ArrowRight, Code2, HeartHandshake, ShieldCheck, UsersRound } from "luci
 import { GalleryCarousel } from "@/components/Carousel";
 import { CollaborationTicker } from "@/components/CollaborationTicker";
 
+export const revalidate = 60;
+
 const impactCards = [
   {
     title: "Technical Events",

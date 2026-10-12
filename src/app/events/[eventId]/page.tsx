@@ -1,18 +1,38 @@
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getEventById, getEventGallery } from "@/lib/content";
+import { CalendarDays, ChevronLeft, ImageIcon, MapPin } from "lucide-react";
+import { getPublicEventById, getPublicEventGallery } from "@/lib/public-content";
+import { renderInlineFormattedText } from "@/components/InlineFormattedText";
+import { EventGalleryViewer } from "@/components/EventGalleryViewer";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
+
+function displayDate(value: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${value}T00:00:00Z`));
+}
+
+function contentHeading(value: string) {
+  const heading = value.trim();
+  return !heading || heading.toLowerCase() === "section heading"
+    ? "About the Event"
+    : heading;
+}
 
 export default async function EventDetailPage({ params }: { params: Promise<{ eventId: string }> }) {
   const { eventId } = await params;
-  const event = await getEventById(eventId);
+  const event = await getPublicEventById(eventId);
   if (!event) {
     notFound();
     return null;
   }
-  const gallery = await getEventGallery(eventId);
+  const gallery = await getPublicEventGallery(eventId);
   const sections = event.pageSections.length > 0
     ? event.pageSections
     : gallery.length > 0
@@ -21,50 +41,56 @@ export default async function EventDetailPage({ params }: { params: Promise<{ ev
 
   return (
     <main className="innerPage eventDetailPage">
-      <section className="eventHero innerContainer">
-        <div className="innerHeroCopy">
-          <h1>{event.title}</h1>
-          <p>{event.description}</p>
-          <span className="eventMeta">
-            {new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(`${event.eventDate}T00:00:00Z`))}
-            {event.location && <> - {event.location}</>}
-          </span>
-        </div>
-        {event.imageUrl && (
-          <div className="innerHeroImage">
-            <Image src={event.imageUrl} alt={event.title} fill unoptimized loading="lazy" sizes="(max-width: 800px) 100vw, 50vw" style={{ objectFit: "cover" }} />
+      <section className="eventDetailHero">
+        <div className="eventDetailHeroInner innerContainer">
+          <div className="eventDetailHeroCopy">
+            <Link href="/events" className="eventDetailBack"><ChevronLeft size={16} /> All Events</Link>
+            <span className="sectionPill">IEEE CS Event</span>
+            <h1>{event.title}</h1>
+            <p>{event.description}</p>
+            <div className="eventDetailMeta" aria-label="Event information">
+              <span><CalendarDays size={17} /> {displayDate(event.eventDate)}</span>
+              {event.location && <span><MapPin size={17} /> {event.location}</span>}
+            </div>
           </div>
-        )}
+          <div className={`eventDetailHeroMedia${event.imageUrl ? "" : " empty"}`}>
+            {event.imageUrl ? (
+              <Image
+                src={event.imageUrl}
+                alt={event.title}
+                fill
+                unoptimized
+                preload
+                sizes="(max-width: 850px) 100vw, 50vw"
+                style={{ objectFit: "cover" }}
+              />
+            ) : (
+              <div className="eventDetailImageFallback">
+                <CalendarDays size={58} />
+                <span>IEEE Computer Society Event</span>
+              </div>
+            )}
+            <span className="eventDetailMediaBadge">Superior University</span>
+          </div>
+        </div>
       </section>
 
       <section className="eventPageSections innerContainer">
         {sections.length === 0 ? (
-          <div className="eventPageEmpty">No event page sections added yet.</div>
+          <div className="eventPageEmpty">
+            <ImageIcon size={30} />
+            <div><h2>More event details coming soon</h2><p>This page will be updated with highlights and event moments.</p></div>
+          </div>
         ) : sections.map((section) => (
           section.type === "content" ? (
             <article className={`eventContentSection ${section.align === "center" ? "center" : ""}`} key={section.id}>
+              <div className="eventContentAccent" aria-hidden="true" />
               {section.subheading && <span style={{ color: section.subheadingColor || "#2563eb" }}>{section.subheading}</span>}
-              {section.heading && <h2 style={{ color: section.headingColor || "#0f2f57" }}>{section.heading}</h2>}
-              {section.body && <p style={{ color: section.bodyColor || "#64748b" }}>{section.body}</p>}
+              <h2 style={{ color: section.headingColor || "#0f2f57" }}>{contentHeading(section.heading)}</h2>
+              {section.body && <p style={{ color: section.bodyColor || "#64748b" }}>{renderInlineFormattedText(section.body)}</p>}
             </article>
           ) : (
-            <article className="eventGallerySection" key={section.id}>
-              <h2>{section.heading || "Event Gallery"}</h2>
-              {gallery.length === 0 ? (
-                <p>No gallery images added yet.</p>
-              ) : (
-                <div className={section.layout === "carousel" ? "eventGalleryCarousel" : "galleryGrid"}>
-                  {gallery.map((img) => (
-                    <article key={img.id} className="galleryItem">
-                      <div className="galleryImageFrame">
-                        <Image src={img.imageUrl} alt={img.description || "Event gallery image"} fill unoptimized loading="lazy" sizes="(max-width: 760px) 86vw, 33vw" style={{ objectFit: "cover" }} />
-                      </div>
-                      {img.description && <p className="galleryCaption">{img.description}</p>}
-                    </article>
-                  ))}
-                </div>
-              )}
-            </article>
+            <EventGalleryViewer key={section.id} gallery={gallery} heading={section.heading} layout={section.layout} />
           )
         ))}
       </section>

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
 import { getEventGallery, addEventGalleryImage } from "@/lib/content";
 import { parseImage } from "@/lib/content-input";
+import { revalidateEventContent } from "@/lib/content-revalidation";
 
 export const runtime = "nodejs";
 
@@ -37,6 +38,7 @@ export async function POST(request: Request, props: { params: Promise<{ eventId:
     if (!input.value) return NextResponse.json({ error: "No image provided" }, { status: 400 });
 
     const imageId = await addEventGalleryImage(params.eventId, input.value, description.value);
+    revalidateEventContent();
     return NextResponse.json({ id: imageId }, { status: 201 });
   } catch (error) {
     console.error("Gallery upload error:", error);

@@ -11,7 +11,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       headers: {
         "Content-Type": image.mimeType,
         "Content-Length": String(image.size),
-        "Cache-Control": "public, max-age=3600",
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "CDN-Cache-Control": "public, s-maxage=31536000",
+        "Vercel-CDN-Cache-Control": "public, s-maxage=31536000",
         "X-Content-Type-Options": "nosniff",
       },
     });

@@ -2,7 +2,9 @@ import "server-only";
 
 import { Binary, ObjectId, type Collection, type WithId } from "mongodb";
 import { getDatabase } from "@/lib/mongodb";
-import type { SocietyEvent, TeamMember, EventGalleryImage, EventPageSection, Collaboration } from "@/lib/types";
+import type { SocietyEvent, TeamMember, TeamCategory, LeadershipMember, ContactSettings, EventGalleryImage, EventPageSection, Collaboration } from "@/lib/types";
+
+export const DEFAULT_CONTACT_PHONE = "+92 300 1234567";
 
 export type ContentImageMimeType = "image/png" | "image/jpeg" | "image/webp";
 
@@ -32,11 +34,30 @@ interface TeamMemberDocument {
   name: string;
   role: string;
   bio: string;
+  category?: TeamCategory;
   displayOrder: number;
   image?: Binary;
   imageMimeType?: ContentImageMimeType;
   imageSize?: number;
   createdAt: Date;
+  updatedAt: Date;
+}
+
+interface LeadershipMemberDocument {
+  name: string;
+  role: string;
+  tenure: string;
+  displayOrder: number;
+  image?: Binary;
+  imageMimeType?: ContentImageMimeType;
+  imageSize?: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface ContactSettingsDocument {
+  _id: "contact";
+  phoneNumber: string;
   updatedAt: Date;
 }
 
@@ -64,6 +85,15 @@ export interface TeamMemberInput {
   name: string;
   role: string;
   bio: string;
+  category: TeamCategory;
+  displayOrder: number;
+  image?: { data: Uint8Array; mimeType: ContentImageMimeType };
+}
+
+export interface LeadershipMemberInput {
+  name: string;
+  role: string;
+  tenure: string;
   displayOrder: number;
   image?: { data: Uint8Array; mimeType: ContentImageMimeType };
 }
@@ -97,9 +127,23 @@ let teamSetupPromise: Promise<void> | undefined;
 async function teamCollection(): Promise<Collection<TeamMemberDocument>> {
   const database = await getDatabase();
   const collection = database.collection<TeamMemberDocument>("team_members");
-  teamSetupPromise ??= collection.createIndex({ displayOrder: 1, createdAt: 1 }).then(() => undefined).catch(() => undefined);
+  teamSetupPromise ??= collection.createIndex({ category: 1, displayOrder: 1, createdAt: 1 }).then(() => undefined).catch(() => undefined);
   await teamSetupPromise;
   return collection;
+}
+
+let leadershipSetupPromise: Promise<void> | undefined;
+async function leadershipCollection(): Promise<Collection<LeadershipMemberDocument>> {
+  const database = await getDatabase();
+  const collection = database.collection<LeadershipMemberDocument>("leadership_members");
+  leadershipSetupPromise ??= collection.createIndex({ displayOrder: 1, createdAt: 1 }).then(() => undefined).catch(() => undefined);
+  await leadershipSetupPromise;
+  return collection;
+}
+
+async function contactSettingsCollection(): Promise<Collection<ContactSettingsDocument>> {
+  const database = await getDatabase();
+  return database.collection<ContactSettingsDocument>("site_settings");
 }
 
 let collabSetupPromise: Promise<void> | undefined;
@@ -151,13 +195,36 @@ function serializeTeamMember(document: WithId<TeamMemberDocument>): TeamMember {
     name: document.name,
     role: document.role,
     bio: document.bio,
+    category: document.category || "executive-body",
     displayOrder: document.displayOrder,
     ...(hasImage ? { imageUrl: `/api/team/${id}/image?v=${document.updatedAt.getTime()}` } : {}),
     createdAt: document.createdAt.toISOString(),
   };
 }
 
-function imageFields(image: EventInput["image"] | TeamMemberInput["image"]) {
+function serializeLeadershipMember(document: WithId<LeadershipMemberDocument>): LeadershipMember {
+  const id = document._id.toHexString();
+  const hasImage = Boolean(document.image || (document.imageMimeType && document.imageSize));
+  return {
+    id,
+    name: document.name,
+    role: document.role,
+    tenure: document.tenure,
+    displayOrder: document.displayOrder,
+    ...(hasImage ? { imageUrl: `/api/leadership/${id}/image?v=${document.updatedAt.getTime()}` } : {}),
+    createdAt: document.createdAt.toISOString(),
+  };
+}
+
+function serializeContactSettings(phoneNumber: string, updatedAt?: Date): ContactSettings {
+  return {
+    phoneNumber,
+    whatsappUrl: `https://wa.me/${phoneNumber.replace(/\D/g, "")}`,
+    ...(updatedAt ? { updatedAt: updatedAt.toISOString() } : {}),
+  };
+}
+
+function imageFields(image: EventInput["image"] | TeamMemberInput["image"] | LeadershipMemberInput["image"] | CollaborationInput["image"]) {
   return image
     ? {
         image: new Binary(image.data),
@@ -243,6 +310,7 @@ export async function createTeamMember(input: TeamMemberInput): Promise<TeamMemb
     name: input.name,
     role: input.role,
     bio: input.bio,
+    category: input.category,
     displayOrder: input.displayOrder,
     ...imageFields(input.image),
     createdAt: now,
@@ -258,7 +326,7 @@ export async function updateTeamMember(id: string, input: TeamMemberInput): Prom
   const collection = await teamCollection();
   const document = await collection.findOneAndUpdate(
     { _id },
-    { $set: { name: input.name, role: input.role, bio: input.bio, displayOrder: input.displayOrder, ...imageFields(input.image), updatedAt: new Date() } },
+    { $set: { name: input.name, role: input.role, bio: input.bio, category: input.category, displayOrder: input.displayOrder, ...imageFields(input.image), updatedAt: new Date() } },
     { returnDocument: "after" },
   );
   return document ? serializeTeamMember(document) : null;
@@ -278,9 +346,77 @@ export async function getTeamMemberImage(id: string) {
   return { data: new Uint8Array(document.image.value()), mimeType: document.imageMimeType, size: document.imageSize };
 }
 
-export async function listCollaborations(): Promise<Collaboration[]> {
-  const collection = await collaborationCollection();
+export async function listLeadershipMembers(): Promise<LeadershipMember[]> {
+  const collection = await leadershipCollection();
   const documents = await collection.find({}, { projection: { image: 0 } }).sort({ displayOrder: 1, createdAt: 1 }).toArray();
+  return documents.map((document) => serializeLeadershipMember(document as WithId<LeadershipMemberDocument>));
+}
+
+export async function createLeadershipMember(input: LeadershipMemberInput): Promise<LeadershipMember> {
+  const collection = await leadershipCollection();
+  const now = new Date();
+  const document: LeadershipMemberDocument = {
+    name: input.name,
+    role: input.role,
+    tenure: input.tenure,
+    displayOrder: input.displayOrder,
+    ...imageFields(input.image),
+    createdAt: now,
+    updatedAt: now,
+  };
+  const result = await collection.insertOne(document);
+  return serializeLeadershipMember({ ...document, _id: result.insertedId });
+}
+
+export async function updateLeadershipMember(id: string, input: LeadershipMemberInput): Promise<LeadershipMember | null> {
+  const _id = objectId(id);
+  if (!_id) return null;
+  const collection = await leadershipCollection();
+  const document = await collection.findOneAndUpdate(
+    { _id },
+    { $set: { name: input.name, role: input.role, tenure: input.tenure, displayOrder: input.displayOrder, ...imageFields(input.image), updatedAt: new Date() } },
+    { returnDocument: "after" },
+  );
+  return document ? serializeLeadershipMember(document) : null;
+}
+
+export async function deleteLeadershipMember(id: string) {
+  const _id = objectId(id);
+  if (!_id) return false;
+  return (await (await leadershipCollection()).deleteOne({ _id })).deletedCount === 1;
+}
+
+export async function getLeadershipMemberImage(id: string) {
+  const _id = objectId(id);
+  if (!_id) return null;
+  const document = await (await leadershipCollection()).findOne({ _id }, { projection: { image: 1, imageMimeType: 1, imageSize: 1 } });
+  if (!document?.image || !document.imageMimeType || !document.imageSize) return null;
+  return { data: new Uint8Array(document.image.value()), mimeType: document.imageMimeType, size: document.imageSize };
+}
+
+export async function getContactSettings(): Promise<ContactSettings> {
+  const document = await (await contactSettingsCollection()).findOne({ _id: "contact" });
+  return document
+    ? serializeContactSettings(document.phoneNumber, document.updatedAt)
+    : serializeContactSettings(DEFAULT_CONTACT_PHONE);
+}
+
+export async function updateContactSettings(phoneNumber: string): Promise<ContactSettings> {
+  const collection = await contactSettingsCollection();
+  const updatedAt = new Date();
+  const document = await collection.findOneAndUpdate(
+    { _id: "contact" },
+    { $set: { phoneNumber, updatedAt } },
+    { upsert: true, returnDocument: "after" },
+  );
+  return serializeContactSettings(document?.phoneNumber || phoneNumber, document?.updatedAt || updatedAt);
+}
+
+export async function listCollaborations(limit?: number): Promise<Collaboration[]> {
+  const collection = await collaborationCollection();
+  let cursor = collection.find({}, { projection: { image: 0 } }).sort({ displayOrder: 1, createdAt: 1 });
+  if (limit && limit > 0) cursor = cursor.limit(limit);
+  const documents = await cursor.toArray();
   return documents.map((document) => serializeCollaboration(document as WithId<CollaborationDocument>));
 }
 
@@ -343,11 +479,13 @@ export async function addEventGalleryImage(eventId: string, image: { data: Uint8
   return result.insertedId.toHexString();
 }
 
-export async function getEventGallery(eventId: string): Promise<EventGalleryImage[]> {
+export async function getEventGallery(eventId: string, limit?: number): Promise<EventGalleryImage[]> {
   const _eventId = objectId(eventId);
   if (!_eventId) return [];
   const collection = await eventGalleryCollection();
-  const documents = await collection.find({ eventId: _eventId }, { projection: { image: 0 } }).sort({ createdAt: -1 }).toArray();
+  let cursor = collection.find({ eventId: _eventId }, { projection: { image: 0 } }).sort({ createdAt: -1 });
+  if (limit && limit > 0) cursor = cursor.limit(limit);
+  const documents = await cursor.toArray();
   return documents.map((doc) => ({
     id: doc._id.toHexString(),
     eventId: doc.eventId.toHexString(),

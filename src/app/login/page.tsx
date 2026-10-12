@@ -13,14 +13,16 @@ import {
   ImageIcon,
   LayoutDashboard,
   LogOut,
+  Medal,
+  Phone,
   ShieldCheck,
   Users,
 } from "lucide-react";
 import { Toast, type ToastMessage } from "@/components/Toast";
-import { EventManager, TeamManager, CollaborationManager } from "@/components/AdminContentManagers";
+import { EventManager, TeamManager, LeadershipManager, ContactSettingsManager, CollaborationManager } from "@/components/AdminContentManagers";
 import { CertificateTemplateEditor } from "@/components/CertificateTemplateEditor";
 
-type AdminPanelName = "certificates" | "events" | "team" | "collaborations" | "templates" | "admins";
+type AdminPanelName = "certificates" | "events" | "team" | "leadership" | "contact-settings" | "collaborations" | "templates" | "admins";
 const CUSTOM_EVENT_VALUE = "__custom__";
 
 const panelCopy: Record<AdminPanelName, { title: string; description: string }> = {
@@ -35,6 +37,14 @@ const panelCopy: Record<AdminPanelName, { title: string; description: string }> 
   team: {
     title: "Team Management",
     description: "Manage the members displayed on the Society and Team pages.",
+  },
+  leadership: {
+    title: "Leadership Management",
+    description: "Manage leadership portraits and details shown on the About page.",
+  },
+  "contact-settings": {
+    title: "Contact Settings",
+    description: "Update the WhatsApp number displayed on the public Contact page.",
   },
   collaborations: {
     title: "Collaborations & Partners",
@@ -665,6 +675,12 @@ export default function AdminPage() {
           <button type="button" className={activePanel === "team" ? "active" : ""} onClick={() => setActivePanel("team")}>
             <Users size={18} /><span>Team</span>
           </button>
+          <button type="button" className={activePanel === "leadership" ? "active" : ""} onClick={() => setActivePanel("leadership")}>
+            <Medal size={18} /><span>Leadership</span>
+          </button>
+          <button type="button" className={activePanel === "contact-settings" ? "active" : ""} onClick={() => setActivePanel("contact-settings")}>
+            <Phone size={18} /><span>Contact Settings</span>
+          </button>
           <button type="button" className={activePanel === "collaborations" ? "active" : ""} onClick={() => setActivePanel("collaborations")}>
             <Handshake size={18} /><span>Collaborations</span>
           </button>
@@ -1000,6 +1016,10 @@ export default function AdminPage() {
           <EventManager notify={showToast} onUnauthorized={() => setAuthState("login")} />
         ) : activePanel === "team" ? (
           <TeamManager notify={showToast} onUnauthorized={() => setAuthState("login")} />
+        ) : activePanel === "leadership" ? (
+          <LeadershipManager notify={showToast} onUnauthorized={() => setAuthState("login")} />
+        ) : activePanel === "contact-settings" ? (
+          <ContactSettingsManager notify={showToast} onUnauthorized={() => setAuthState("login")} />
         ) : (
           <CollaborationManager notify={showToast} onUnauthorized={() => setAuthState("login")} />
         )}

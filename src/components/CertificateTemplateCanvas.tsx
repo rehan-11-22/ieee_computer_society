@@ -111,6 +111,7 @@ export function CertificateTemplateCanvas({
       {layout.showContentPanel && <div className="templateCanvasPanel" aria-hidden="true" />}
       {CERTIFICATE_TEMPLATE_FIELD_KEYS.map((key) => {
         const field = layout.fields[key];
+        if (field.enabled === false) return null;
         const isSignature = key === "issuedBy" || key === "issuingOrganization";
         const content = (
           <>

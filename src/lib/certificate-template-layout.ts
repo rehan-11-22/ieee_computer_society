@@ -34,7 +34,7 @@ const field = (
   width: number,
   fontSize: number,
   color: string,
-): CertificateTemplateFieldLayout => ({ x, y, width, fontSize, color });
+): CertificateTemplateFieldLayout => ({ enabled: true, x, y, width, fontSize, color });
 
 export const DEFAULT_CERTIFICATE_TEMPLATE_LAYOUT: CertificateTemplateLayout = {
   showContentPanel: false,
@@ -57,7 +57,10 @@ export function cloneCertificateTemplateLayout(
   return {
     showContentPanel: layout.showContentPanel,
     fields: Object.fromEntries(
-      CERTIFICATE_TEMPLATE_FIELD_KEYS.map((key) => [key, { ...layout.fields[key] }]),
+      CERTIFICATE_TEMPLATE_FIELD_KEYS.map((key) => [key, {
+        ...layout.fields[key],
+        enabled: layout.fields[key]?.enabled !== false,
+      }]),
     ) as CertificateTemplateLayout["fields"],
   };
 }
@@ -98,12 +101,14 @@ export function parseCertificateTemplateLayout(value: unknown): LayoutParseResul
       !validNumber(candidate.y, 0, 100) ||
       !validNumber(candidate.width, 10, 100) ||
       !validNumber(candidate.fontSize, 6, 60) ||
+      (candidate.enabled !== undefined && typeof candidate.enabled !== "boolean") ||
       typeof candidate.color !== "string" ||
       !/^#[0-9a-f]{6}$/i.test(candidate.color)
     ) {
       return { ok: false, error: `Invalid layout values for ${CERTIFICATE_TEMPLATE_FIELD_LABELS[key]}` };
     }
     parsedFields[key] = {
+      enabled: candidate.enabled !== false,
       x: Number(candidate.x),
       y: Number(candidate.y),
       width: Number(candidate.width),

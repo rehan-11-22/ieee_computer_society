@@ -3,7 +3,6 @@ import { Playfair_Display, Poppins } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import Image from "next/image";
-import { getCurrentSession } from "@/lib/auth";
 import { Mail, MapPin, ShieldCheck, ChevronRight, Award } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 
@@ -21,14 +20,12 @@ export const metadata: Metadata = {
 
 import { ConditionalLayout } from "../components/ConditionalLayout";
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const isLoggedIn = !!(await getCurrentSession());
-
-  const header = <SiteHeader isLoggedIn={isLoggedIn} />;
+  const header = <SiteHeader />;
 
   const footer = (
     <footer className="siteFooter">
@@ -41,7 +38,7 @@ export default async function RootLayout({
               alt="IEEE Society Superior University"
               width={250}
               height={85}
-              priority
+              loading="lazy"
             />
           </Link>
           <p className="footerTagline">
@@ -82,7 +79,7 @@ export default async function RootLayout({
               </svg>
             </a>
             <a
-              href="mailto:ieeecs@superior.edu.pk"
+              href="mailto:ieeesuperioruniversity@gmail.com"
               aria-label="Email IEEE CS"
               className="footerSocialBtn"
             >
@@ -126,7 +123,7 @@ export default async function RootLayout({
           <div className="footerContactItem">
             <Mail size={15} className="footerIconAccent" />
             <div>
-              <a href="mailto:ieeecs@superior.edu.pk">ieeecs@superior.edu.pk</a>
+              <a href="mailto:ieeesuperioruniversity@gmail.com">ieeesuperioruniversity@gmail.com</a>
               <span>Student Inquiries &amp; Collaborations</span>
             </div>
           </div>

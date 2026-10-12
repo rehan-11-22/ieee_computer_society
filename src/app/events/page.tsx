@@ -1,13 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
-import { CalendarDays, ChevronRight, MapPin, Sparkles } from "lucide-react";
-import { listEvents } from "@/lib/content";
+import { CalendarDays, ChevronRight, Sparkles } from "lucide-react";
+import { listPublicEvents } from "@/lib/public-content";
+import { DeferredEventVideo } from "@/components/DeferredEventVideo";
 
 export const revalidate = 30;
-
-function displayDate(value: string) {
-  return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}T00:00:00Z`));
-}
 
 function eventStatus(value: string) {
   const eventTime = new Date(`${value}T00:00:00Z`).getTime();
@@ -18,34 +14,8 @@ function eventStatus(value: string) {
   return "previous";
 }
 
-function EventCards({ events }: { events: Awaited<ReturnType<typeof listEvents>> }) {
-  return (
-    <div className="eventsGrid">
-      {events.map((event) => (
-        <Link key={event.id} href={`/events/${event.id}`} className="eventCardLink">
-          <article className="eventCard">
-            <div className="eventGridImage">
-              {event.imageUrl ? (
-                <Image src={event.imageUrl} alt={event.title} fill unoptimized loading="lazy" sizes="(max-width: 700px) 100vw, 33vw" style={{ objectFit: "cover" }} />
-              ) : (
-                <div className="eventImageFallback"><CalendarDays size={46} /><span>IEEE CS Event</span></div>
-              )}
-            </div>
-            <section>
-              <span><CalendarDays size={14} /> {displayDate(event.eventDate)}</span>
-              <h2>{event.title}</h2>
-              <p>{event.description}</p>
-              {event.location && <small className="eventLocation"><MapPin size={13} /> {event.location}</small>}
-            </section>
-          </article>
-        </Link>
-      ))}
-    </div>
-  );
-}
-
 export default async function EventsPage() {
-  const events = await listEvents();
+  const events = await listPublicEvents();
   const groups = [
     { key: "upcoming", title: "Upcoming Events", description: "Join us at our next sessions and activities." },
     { key: "latest", title: "Latest Events", description: "Events happening today." },
@@ -61,16 +31,7 @@ export default async function EventsPage() {
           <p>Explore technical workshops, expert talks, leadership meetups, and community events by IEEE CS Superior University.</p>
         </div>
         <div className="innerHeroImage eventsHeroMedia">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="metadata"
-            className="innerHeroVideo"
-          >
-            <source src="/events-video.mp4" type="video/mp4" />
-          </video>
+          <DeferredEventVideo />
         </div>
       </section>
 

@@ -1,9 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CalendarDays, ChevronLeft, MapPin } from "lucide-react";
-import { listEvents } from "@/lib/content";
+import { listPublicEvents } from "@/lib/public-content";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 type EventStatus = "upcoming" | "latest" | "previous";
 
@@ -32,7 +32,7 @@ export default async function EventCategoryPage({ params }: { params: Promise<{ 
   const content = statusContent[selectedStatus];
   if (!content) return <main className="innerPage listingPage"><section className="publicEmptyState innerContainer"><h2>Event category not found</h2><Link href="/events">Back to events</Link></section></main>;
 
-  const events = (await listEvents()).filter((event) => eventStatus(event.eventDate) === selectedStatus);
+  const events = (await listPublicEvents()).filter((event) => eventStatus(event.eventDate) === selectedStatus);
   return (
     <main className="innerPage listingPage">
       <section className="listingHero innerContainer eventCategoryHero">

@@ -1,7 +1,8 @@
 import "server-only";
 
-import type { ContentImageMimeType, EventInput, TeamMemberInput, CollaborationInput } from "@/lib/content";
+import type { ContentImageMimeType, EventInput, TeamMemberInput, LeadershipMemberInput, CollaborationInput } from "@/lib/content";
 import type { EventPageSection } from "@/lib/types";
+import { isTeamCategory } from "@/lib/team-categories";
 
 const MAX_IMAGE_SIZE = 4 * 1024 * 1024;
 const IMAGE_TYPES = new Set<ContentImageMimeType>(["image/png", "image/jpeg", "image/webp"]);
@@ -91,18 +92,54 @@ export async function parseTeamMemberForm(form: FormData): Promise<ParseResult<T
   const name = text(form, "name", "Name", 100);
   const role = text(form, "role", "Role", 100);
   const bio = text(form, "bio", "Bio", 400, false);
+  const category = text(form, "category", "Team", 40);
   const rawOrder = text(form, "displayOrder", "Display order", 4);
   const uploadedImage = await parseImage(form);
   if (!name.ok) return name;
   if (!role.ok) return role;
   if (!bio.ok) return bio;
+  if (!category.ok) return category;
   if (!rawOrder.ok) return rawOrder;
   if (!uploadedImage.ok) return uploadedImage;
   const displayOrder = Number.parseInt(rawOrder.value, 10);
   if (!Number.isInteger(displayOrder) || displayOrder < 0 || displayOrder > 999) {
     return { ok: false, error: "Display order must be between 0 and 999" };
   }
-  return { ok: true, value: { name: name.value, role: role.value, bio: bio.value, displayOrder, image: uploadedImage.value } };
+  if (!isTeamCategory(category.value)) {
+    return { ok: false, error: "Please select a valid team" };
+  }
+  return { ok: true, value: { name: name.value, role: role.value, bio: bio.value, category: category.value, displayOrder, image: uploadedImage.value } };
+}
+
+export async function parseLeadershipMemberForm(form: FormData): Promise<ParseResult<LeadershipMemberInput>> {
+  const name = text(form, "name", "Name", 100);
+  const role = text(form, "role", "Role", 100);
+  const tenure = text(form, "tenure", "Tenure line", 120);
+  const rawOrder = text(form, "displayOrder", "Display order", 4);
+  const uploadedImage = await parseImage(form);
+  if (!name.ok) return name;
+  if (!role.ok) return role;
+  if (!tenure.ok) return tenure;
+  if (!rawOrder.ok) return rawOrder;
+  if (!uploadedImage.ok) return uploadedImage;
+  const displayOrder = Number.parseInt(rawOrder.value, 10);
+  if (!Number.isInteger(displayOrder) || displayOrder < 0 || displayOrder > 999) {
+    return { ok: false, error: "Display order must be between 0 and 999" };
+  }
+  return { ok: true, value: { name: name.value, role: role.value, tenure: tenure.value, displayOrder, image: uploadedImage.value } };
+}
+
+export function parseContactSettingsForm(form: FormData): ParseResult<{ phoneNumber: string }> {
+  const phoneNumber = text(form, "phoneNumber", "Contact number", 30);
+  if (!phoneNumber.ok) return phoneNumber;
+  if (!/^\+[0-9 ()-]+$/.test(phoneNumber.value)) {
+    return { ok: false, error: "Contact number must start with + and contain only numbers, spaces, brackets, or hyphens" };
+  }
+  const digits = phoneNumber.value.replace(/\D/g, "");
+  if (digits.length < 8 || digits.length > 15) {
+    return { ok: false, error: "Contact number must contain 8 to 15 digits including the country code" };
+  }
+  return { ok: true, value: { phoneNumber: phoneNumber.value } };
 }
 
 export async function parseCollaborationForm(form: FormData): Promise<ParseResult<CollaborationInput>> {
@@ -128,4 +165,3 @@ export async function parseCollaborationForm(form: FormData): Promise<ParseResul
     },
   };
 }
-

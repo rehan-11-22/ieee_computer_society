@@ -156,6 +156,7 @@ function drawUploadedTemplateContent(
 
   for (const key of CERTIFICATE_TEMPLATE_FIELD_KEYS) {
     const field = layout.fields[key];
+    if (field.enabled === false) continue;
     const usesBold = key === "certificateType" || key === "recipientName" || key === "credentialId" || key === "issuedBy" || key === "issuingOrganization";
     const drawn = drawTemplateField(page, templateFieldText(key, certificate), field, usesBold ? bold : regular);
 

@@ -28,18 +28,8 @@ async function certificateCollection(): Promise<Collection<CertificateDocument>>
   const database = await getDatabase();
   const collection = database.collection<CertificateDocument>("certificates");
 
-  certificateSetupPromise ??= Promise.all([
-    collection.createIndex({ credentialId: 1 }, { unique: true }),
-    collection.updateMany(
-      {
-        $or: [
-          { verificationLink: { $exists: false } },
-          { verificationLink: "" },
-        ],
-      },
-      [{ $set: { verificationLink: { $concat: ["/verify/", "$credentialId"] } } }],
-    ),
-  ])
+  certificateSetupPromise ??= collection
+    .createIndex({ credentialId: 1 }, { unique: true })
     .then(() => undefined)
     .catch((error) => {
       certificateSetupPromise = undefined;

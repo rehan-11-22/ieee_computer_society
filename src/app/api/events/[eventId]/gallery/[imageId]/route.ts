@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
 import { getEventGalleryImageRaw, deleteEventGalleryImage } from "@/lib/content";
+import { revalidateEventContent } from "@/lib/content-revalidation";
 
 export const runtime = "nodejs";
 
@@ -13,7 +14,11 @@ export async function GET(request: Request, props: { params: Promise<{ eventId: 
       status: 200,
       headers: {
         "Content-Type": image.mimeType,
-        "Cache-Control": "public, max-age=31536000",
+        "Content-Length": String(image.size),
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "CDN-Cache-Control": "public, s-maxage=31536000",
+        "Vercel-CDN-Cache-Control": "public, s-maxage=31536000",
+        "X-Content-Type-Options": "nosniff",
       },
     });
   } catch (error) {
@@ -28,6 +33,7 @@ export async function DELETE(request: Request, props: { params: Promise<{ eventI
     const { eventId, imageId } = await props.params;
     const success = await deleteEventGalleryImage(eventId, imageId);
     if (!success) return NextResponse.json({ error: "Image not found" }, { status: 404 });
+    revalidateEventContent();
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     console.error("Gallery image delete error:", error);

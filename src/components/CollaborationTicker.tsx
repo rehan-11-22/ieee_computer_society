@@ -1,8 +1,8 @@
 import Image from "next/image";
-import { listCollaborations } from "@/lib/content";
+import { listPublicCollaborations } from "@/lib/public-content";
 
 export async function CollaborationTicker() {
-  const collaborations = await listCollaborations();
+  const collaborations = await listPublicCollaborations();
 
   if (!collaborations || collaborations.length === 0) {
     return null;
