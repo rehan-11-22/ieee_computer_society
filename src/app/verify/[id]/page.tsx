@@ -11,6 +11,7 @@ export default function VerifyResult({ params }: { params: Promise<{ id: string 
   const [cert, setCert] = useState<Certificate | null>(null);
   const [loading, setLoading] = useState(true);
   const viewCertificateRef = useRef<HTMLAnchorElement>(null);
+  const verificationMessageRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     fetch(`/api/certificates/${encodeURIComponent(resolvedParams.id)}`)
@@ -28,10 +29,12 @@ export default function VerifyResult({ params }: { params: Promise<{ id: string 
   const isValid = cert?.status === "Valid";
 
   useEffect(() => {
-    if (loading || !cert || !isValid) return;
+    if (loading) return;
+    const target = isValid ? viewCertificateRef.current : verificationMessageRef.current;
+    if (!target) return;
     const timer = window.setTimeout(() => {
-      viewCertificateRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-      viewCertificateRef.current?.focus({ preventScroll: true });
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (target instanceof HTMLAnchorElement) target.focus({ preventScroll: true });
     }, 120);
     return () => window.clearTimeout(timer);
   }, [loading, cert, isValid]);
@@ -78,7 +81,7 @@ export default function VerifyResult({ params }: { params: Promise<{ id: string 
             </div>
           </article>
         ) : cert ? (
-          <article className="verificationRecord revokedRecord">
+          <article ref={verificationMessageRef} className="verificationRecord revokedRecord">
             <div className="verificationRecordHeader">
               <div><span className="recordStatusIcon"><AlertTriangle size={24} /></span><strong>Certificate Revoked</strong></div>
               <span className="recordBadge revokedBadge">Revoked</span>
@@ -89,7 +92,7 @@ export default function VerifyResult({ params }: { params: Promise<{ id: string 
             </div>
           </article>
         ) : (
-          <article className="verificationRecord notFoundRecord">
+          <article ref={verificationMessageRef} className="verificationRecord notFoundRecord">
             <div className="verificationRecordHeader">
               <div><span className="recordStatusIcon"><SearchX size={24} /></span><strong>Certificate Not Found</strong></div>
               <Link className="retryVerification" href="/verify"><RotateCcw size={16} /> Try Again</Link>
