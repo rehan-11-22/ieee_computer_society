@@ -46,7 +46,7 @@ export default async function AboutPage() {
         </div>
         <div className="innerHeroImage">
           <Image
-            src="/WhatsApp Image 2026-09-30 at 5.14.41 PM (2).jpeg"
+            src="/about.jpeg"
             alt="IEEE Computer Society Superior University community"
             fill
             priority

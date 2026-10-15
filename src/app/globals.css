@@ -3750,24 +3750,24 @@ footer{
     display:grid;
     place-items:center;
     border-radius:14px;
-  text-decoration:none;
-  }
-  
-  .socialLinks a svg{
-  width:42px;
-  height:42px;
-  display:block;
-  color:#0a66c2;
-  }
+    text-decoration:none;
+}
 
-  .socialLinks a:first-child svg{
-  color:#d62976;
-  }
-  
-  .socialLinks a:first-child,
-  .socialLinks a:last-child{
-  background:transparent;
-  }
+.socialLinks a svg{
+    width:42px;
+    height:42px;
+    display:block;
+    color:#0a66c2;
+}
+
+.socialLinks a:first-child svg{
+    color:#d62976;
+}
+
+.socialLinks a:first-child,
+.socialLinks a:last-child{
+    background:transparent;
+}
 
 .contactDetails{
     padding:29px 32px 34px;
@@ -4779,21 +4779,24 @@ footer{
 
 .contentEditorModal{
     align-items:flex-start;
-    background:rgba(8,27,49,.42);
+    background:rgba(8,27,49,.6);
+    backdrop-filter:blur(4px);
     display:flex;
     inset:0;
     justify-content:center;
-    overflow:auto;
-    padding:28px 18px;
+    overflow-y:auto;
+    overflow-x:hidden;
+    overscroll-behavior:contain;
+    padding:24px 18px;
     position:fixed;
-    z-index:80;
+    z-index:300;
 }
 
 .contentEditorPanel{
     width:min(760px,100%);
-    max-height:calc(100dvh - 56px);
-    overflow:auto;
+    margin:auto 0;
     position:relative;
+    flex-shrink:0;
 }
 
 .contentFormCard h3,
@@ -5558,7 +5561,8 @@ footer{
 }
 
 .adminShell{
-    min-height:100vh;
+    height:100vh;
+    overflow:hidden;
     display:grid;
     grid-template-columns:272px minmax(0,1fr);
     background:#f3f7fb;
@@ -5761,6 +5765,8 @@ footer{
 
 .adminWorkspace{
     min-width:0;
+    overflow-y:auto;
+    height:100vh;
 }
 
 .adminWorkspaceTop{
@@ -5861,6 +5867,13 @@ footer{
 @media(max-width:980px){
     .adminShell{
         display:block;
+        height:auto;
+        overflow:visible;
+    }
+
+    .adminWorkspace{
+        height:auto;
+        overflow-y:visible;
     }
 
     .adminSidebar{
@@ -6052,8 +6065,8 @@ footer{
 /* ================= ADMIN MOBILE CONTENT MANAGERS ================= */
 @media(max-width:620px){
   .contentManagement{min-width:0;width:100%}
-  .contentManagement .contentEditorModal{padding:10px;align-items:flex-start}
-  .contentManagement .contentEditorPanel{width:100%;max-width:none;max-height:calc(100dvh - 20px);overflow-y:auto;padding:18px 14px;border-radius:14px}
+  .contentManagement .contentEditorModal{padding:12px 8px;align-items:flex-start}
+  .contentManagement .contentEditorPanel{width:100%;max-width:none;overflow:visible;padding:0;border-radius:14px}
   .contentManagement .contentFormRow{grid-template-columns:1fr;gap:10px}
   .contentManagement .contentFormActions{display:grid;grid-template-columns:1fr;gap:8px}
   .contentManagement .contentFormActions button,
@@ -7934,3 +7947,477 @@ footer{
         width:100%;
     }
 }
+
+/* ================= IMAGE ADJUSTER & CROPPER ================= */
+.imageAdjustOverlay{
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(8,20,38,.82);
+    backdrop-filter:blur(6px);
+    padding:16px;
+    overflow-y:auto;
+}
+
+.imageAdjustCard{
+    width:min(420px,100%);
+    background:#0f172a;
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:22px;
+    padding:22px 20px 20px;
+    color:#f8fafc;
+    box-shadow:0 30px 90px rgba(0,0,0,.6);
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+}
+
+.imageAdjustHeader{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+
+.imageAdjustTitle{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    color:#38bdf8;
+    font-size:15px;
+    font-weight:700;
+}
+
+.imageAdjustTitle h4{
+    margin:0;
+    font-size:16px;
+    color:white;
+}
+
+.imageAdjustClose{
+    width:32px;
+    height:32px;
+    border-radius:10px;
+    border:none;
+    background:rgba(255,255,255,.1);
+    color:#94a3b8;
+    display:grid;
+    place-items:center;
+    transition:all .2s;
+}
+
+.imageAdjustClose:hover{
+    background:rgba(255,255,255,.2);
+    color:white;
+}
+
+.imageAdjustHint{
+    margin:0;
+    font-size:11.5px;
+    color:#94a3b8;
+    line-height:1.4;
+}
+
+.imageAdjustHint strong{
+    color:#38bdf8;
+}
+
+.imageAdjustCanvasWrapper{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:#020617;
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,.12);
+    overflow:hidden;
+    user-select:none;
+    touch-action:none;
+}
+
+.imageAdjustCanvas{
+    display:block;
+    cursor:grab;
+}
+
+.imageAdjustCanvas.isDragging{
+    cursor:grabbing;
+}
+
+.imageAdjustControls{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:14px;
+    padding:10px 14px;
+}
+
+.imageAdjustZoomRow{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.adjustIconBtn{
+    width:30px;
+    height:30px;
+    border-radius:8px;
+    border:none;
+    background:rgba(255,255,255,.12);
+    color:white;
+    display:grid;
+    place-items:center;
+    transition:all .15s;
+}
+
+.adjustIconBtn:hover{
+    background:rgba(255,255,255,.24);
+}
+
+.adjustZoomSlider{
+    flex:1;
+    height:6px;
+    border-radius:3px;
+    accent-color:#38bdf8;
+    cursor:pointer;
+}
+
+.imageAdjustSecondaryActions{
+    display:flex;
+    gap:8px;
+    justify-content:center;
+}
+
+.adjustSmallBtn{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:5px 12px;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,.15);
+    background:rgba(255,255,255,.07);
+    color:#cbd5e1;
+    font-size:11.5px;
+    font-weight:600;
+    transition:all .15s;
+}
+
+.adjustSmallBtn:hover{
+    background:rgba(255,255,255,.16);
+    color:white;
+}
+
+.imageAdjustFooter{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:4px;
+}
+
+.imageAdjustFooter button{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:9px 18px;
+    border-radius:11px;
+    font-size:13px;
+    font-weight:700;
+}
+
+.imageAdjustFooter .primary{
+    background:linear-gradient(135deg,#0284c7 0%,#2563eb 100%);
+    color:white;
+    border:none;
+}
+
+.imageAdjustFooter .secondary{
+    background:rgba(255,255,255,.1);
+    color:#e2e8f0;
+    border:1px solid rgba(255,255,255,.16);
+}
+
+.imageAdjustNudgeRow{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.imageAdjustDpad{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+}
+
+.imageAdjustDpadVertical{
+    display:inline-flex;
+    flex-direction:column;
+    gap:3px;
+}
+
+.adjustIconBtn.dpadHalf{
+    height:18px;
+}
+
+/* ImageFieldWithAdjuster in Form */
+.imageFieldWithAdjuster{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-bottom:12px;
+}
+
+.imageFieldLabel{
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--dark);
+}
+
+.imagePreviewCard{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:10px 14px;
+    border-radius:14px;
+    background:#f8fafc;
+    border:1.5px solid #e2e8f0;
+}
+
+.imagePreviewBox{
+    width:70px;
+    height:70px;
+    flex:0 0 70px;
+    overflow:hidden;
+    display:grid;
+    place-items:center;
+    background:white;
+    border:1.5px solid #cbd5e1;
+    box-shadow:0 3px 10px rgba(0,0,0,.06);
+}
+
+.imagePreviewBox.circle{
+    border-radius:50%;
+    width:80px;
+    height:80px;
+    flex:0 0 80px;
+}
+
+.imagePreviewBox.portrait{
+    height:90px;
+    border-radius:10px;
+}
+
+.imagePreviewBox.landscape{
+    width:110px;
+    height:62px;
+    flex:0 0 110px;
+    border-radius:8px;
+}
+
+.imagePreviewImg{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    object-position:center top;
+    display:block;
+}
+
+.imagePreviewActions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+}
+
+.adjustTriggerBtn{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:7px 12px;
+    border-radius:9px;
+    font-size:11.5px;
+    font-weight:700;
+    transition:all .15s;
+    border:none;
+}
+
+.adjustTriggerBtn.primaryAction{
+    background:#2563eb;
+    color:white;
+}
+
+.adjustTriggerBtn.primaryAction:hover{
+    background:#1d4ed8;
+}
+
+.adjustTriggerBtn.secondaryAction{
+    background:#e2e8f0;
+    color:#334155;
+}
+
+.adjustTriggerBtn.secondaryAction:hover{
+    background:#cbd5e1;
+}
+
+.adjustTriggerBtn.deleteAction{
+    background:#fee2e2;
+    color:#b91c1c;
+}
+
+.adjustTriggerBtn.deleteAction:hover{
+    background:#fecaca;
+}
+
+.imageUploadDropzone{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    padding:18px 14px;
+    border-radius:14px;
+    border:2px dashed #cbd5e1;
+    background:#f8fafc;
+    cursor:pointer;
+    text-align:center;
+    transition:all .2s;
+}
+
+.imageUploadDropzone:hover{
+    border-color:#2563eb;
+    background:#eff6ff;
+}
+
+.imageUploadDropzone .uploadIcon{
+    color:#2563eb;
+    margin-bottom:2px;
+}
+
+.imageUploadDropzone span{
+    font-size:12.5px;
+    font-weight:700;
+    color:#1e293b;
+}
+
+.imageUploadDropzone small{
+    font-size:10.5px;
+    color:#64748b;
+}
+
+/* ================= RESPONSIVE MOBILE FIXES ================= */
+@media (max-width: 560px){
+    .contentFormRow{
+        grid-template-columns:1fr !important;
+        gap:10px !important;
+    }
+
+    .imageAdjustOverlay{
+        padding:8px !important;
+        align-items:center !important;
+    }
+
+    .imageAdjustCard{
+        padding:15px 12px 14px !important;
+        gap:10px !important;
+        border-radius:18px !important;
+        max-height:calc(100dvh - 16px) !important;
+        width:100% !important;
+    }
+
+    .imageAdjustTitle h4{
+        font-size:14.5px !important;
+    }
+
+    .imageAdjustCanvasWrapper{
+        width:100% !important;
+        max-width:280px !important;
+        aspect-ratio:1/1 !important;
+        margin:0 auto !important;
+    }
+
+    .imageAdjustCanvas{
+        width:100% !important;
+        height:auto !important;
+        aspect-ratio:1/1 !important;
+    }
+
+    .imageAdjustZoomRow{
+        gap:8px !important;
+    }
+
+    .imageAdjustNudgeRow{
+        justify-content:center !important;
+        gap:8px !important;
+    }
+
+    .imageAdjustSecondaryActions{
+        width:100% !important;
+        justify-content:center !important;
+        gap:6px !important;
+    }
+
+    .adjustSmallBtn{
+        flex:1 1 auto !important;
+        justify-content:center !important;
+        padding:7px 8px !important;
+        font-size:11px !important;
+    }
+
+    .imageAdjustFooter{
+        gap:8px !important;
+        margin-top:2px !important;
+    }
+
+    .imageAdjustFooter button{
+        flex:1 1 50% !important;
+        justify-content:center !important;
+        padding:10px 12px !important;
+        font-size:12.5px !important;
+    }
+
+    .imagePreviewCard{
+        flex-direction:column !important;
+        align-items:stretch !important;
+        gap:12px !important;
+        padding:12px !important;
+    }
+
+    .imagePreviewBox{
+        align-self:center !important;
+    }
+
+    .imagePreviewActions{
+        width:100% !important;
+        display:grid !important;
+        grid-template-columns:1fr 1fr !important;
+        gap:8px !important;
+    }
+
+    .imagePreviewActions .primaryAction{
+        grid-column:1 / -1 !important;
+    }
+
+    .adjustTriggerBtn{
+        justify-content:center !important;
+        padding:9px 10px !important;
+        font-size:12px !important;
+        min-height:38px !important;
+    }
+
+    .imageUploadDropzone{
+        padding:14px 10px !important;
+    }
+
+    .imageUploadDropzone span{
+        font-size:12px !important;
+    }
+
+    .imageUploadDropzone small{
+        font-size:10px !important;
+    }
+}
+
+

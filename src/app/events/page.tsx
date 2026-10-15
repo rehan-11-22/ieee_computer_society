@@ -1,7 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
 import { CalendarDays, ChevronRight, Sparkles } from "lucide-react";
 import { listPublicEvents } from "@/lib/public-content";
-import { DeferredEventVideo } from "@/components/DeferredEventVideo";
 
 export const revalidate = 30;
 
@@ -30,8 +30,15 @@ export default async function EventsPage() {
           <h1>Learn through <em>experience.</em></h1>
           <p>Explore technical workshops, expert talks, leadership meetups, and community events by IEEE CS Superior University.</p>
         </div>
-        <div className="innerHeroImage eventsHeroMedia">
-          <DeferredEventVideo />
+        <div className="innerHeroImage">
+          <Image
+            src="/event.jpeg"
+            alt="IEEE Computer Society Superior University events"
+            fill
+            priority
+            sizes="(max-width: 850px) 100vw, 50vw"
+            style={{ objectFit: "cover" }}
+          />
         </div>
       </section>
 

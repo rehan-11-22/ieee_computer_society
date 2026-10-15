@@ -16,7 +16,7 @@ export const TEAM_CATEGORIES: TeamCategoryDefinition[] = [
     cardTitle: "IEEE CS Executive Body",
     description: "The core team responsible for strategic direction, overall management, and successful execution of IEEE CS activities at Superior University.",
     shortDescription: "Leading the chapter with vision, responsibility, and purpose.",
-    image: "/team_hero.jpeg",
+    image: "/team.jpeg",
   },
   {
     slug: "marketing-team",

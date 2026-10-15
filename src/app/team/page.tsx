@@ -34,7 +34,7 @@ export default async function TeamPage() {
         </div>
         <div className="teamLandingHeroImage">
           <Image
-            src="/team_hero.jpeg"
+            src="/team.jpeg"
             alt="IEEE Computer Society Superior University team"
             fill
             priority

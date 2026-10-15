@@ -6,7 +6,25 @@ import { EventGalleryManager } from "@/components/EventGalleryManager";
 import { renderInlineFormattedText } from "@/components/InlineFormattedText";
 import type { EventPageSection, SocietyEvent, TeamMember, TeamCategory, LeadershipMember, ContactSettings, Collaboration } from "@/lib/types";
 import { TEAM_CATEGORIES } from "@/lib/team-categories";
+import { ImageFieldWithAdjuster } from "@/components/ImageAdjustModal";
 import { useState, useEffect, useCallback, useRef, type FormEvent } from "react";
+
+/** Locks the admin workspace scroll while a modal overlay is open */
+function useBodyScrollLock(active: boolean) {
+  useEffect(() => {
+    if (!active) return;
+    // Lock both body and the admin workspace scroll container
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const workspace = document.querySelector<HTMLElement>(".adminWorkspace");
+    const prevW = workspace?.style.overflow ?? "";
+    if (workspace) workspace.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+      if (workspace) workspace.style.overflow = prevW;
+    };
+  }, [active]);
+}
 
 type Notify = (message: string, type?: "success" | "error" | "info") => void;
 
@@ -185,6 +203,7 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  useBodyScrollLock(showForm);
   const [editing, setEditing] = useState<SocietyEvent | null>(null);
   const [pendingDelete, setPendingDelete] = useState<SocietyEvent | null>(null);
   const [title, setTitle] = useState("");
@@ -361,9 +380,19 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
             <div><label htmlFor="event-date">Event date</label><input id="event-date" type="date" required value={eventDate} onChange={(event) => setEventDate(event.target.value)} /></div>
             <div><label htmlFor="event-location">Location</label><input id="event-location" maxLength={140} value={location} onChange={(event) => setLocation(event.target.value)} placeholder="Superior University" /></div>
           </div>
-          <label htmlFor="event-image">Event image</label>
-          <input id="event-image" type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => chooseEventImage(event.target.files?.[0] || null)} />
-          <span className="formHelp">PNG, JPEG, or WebP up to 4 MB. A portrait photo that includes the face and shoulders works best. Leave empty while editing to keep the current image.</span>
+          <ImageFieldWithAdjuster
+            label="Event Cover Image"
+            id="event-image"
+            aspectType="landscape"
+            currentImageUrl={editing?.imageUrl}
+            selectedFile={imageFile}
+            adjustedPreviewUrl={imagePreviewUrl}
+            helpText="PNG, JPEG, or WebP up to 4 MB. Adjust and crop the banner to 16:9 landscape format."
+            onImageChange={(file, previewUrl) => {
+              setImageFile(file);
+              setImagePreviewUrl(previewUrl);
+            }}
+          />
           <div className="eventBuilderPanel">
             <div className="eventBuilderHead">
               <div>
@@ -511,6 +540,7 @@ export function TeamManager({ notify, onUnauthorized }: { notify: Notify; onUnau
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  useBodyScrollLock(showForm);
   const [editing, setEditing] = useState<TeamMember | null>(null);
   const [pendingDelete, setPendingDelete] = useState<TeamMember | null>(null);
   const [name, setName] = useState("");
@@ -519,6 +549,7 @@ export function TeamManager({ notify, onUnauthorized }: { notify: Notify; onUnau
   const [category, setCategory] = useState<TeamCategory>("executive-body");
   const [displayOrder, setDisplayOrder] = useState("0");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [adjustedPreviewUrl, setAdjustedPreviewUrl] = useState<string | null>(null);
   const visibleMembers = members.filter((member) => teamFilter === "all" || member.category === teamFilter);
   const selectedTeamName = TEAM_CATEGORIES.find((team) => team.slug === teamFilter)?.name;
 
@@ -563,6 +594,7 @@ export function TeamManager({ notify, onUnauthorized }: { notify: Notify; onUnau
     setCategory("executive-body");
     setDisplayOrder("0");
     setImageFile(null);
+    setAdjustedPreviewUrl(null);
     const input = document.getElementById("member-image") as HTMLInputElement | null;
     if (input) input.value = "";
   }
@@ -576,6 +608,7 @@ export function TeamManager({ notify, onUnauthorized }: { notify: Notify; onUnau
     setCategory(member.category);
     setDisplayOrder(String(member.displayOrder));
     setImageFile(null);
+    setAdjustedPreviewUrl(null);
   }
 
   function createNew() {
@@ -643,9 +676,19 @@ export function TeamManager({ notify, onUnauthorized }: { notify: Notify; onUnau
           </div>
           <label htmlFor="member-bio">Short bio</label>
           <textarea id="member-bio" maxLength={400} value={bio} onChange={(event) => setBio(event.target.value)} placeholder="Optional short introduction" />
-          <label htmlFor="member-image">Profile image</label>
-          <input id="member-image" type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setImageFile(event.target.files?.[0] || null)} />
-          <span className="formHelp">PNG, JPEG, or WebP up to 4 MB. Leave empty while editing to keep the current image.</span>
+          <ImageFieldWithAdjuster
+            label="Profile Image (Avatar)"
+            id="member-image"
+            aspectType="circle"
+            currentImageUrl={editing?.imageUrl}
+            selectedFile={imageFile}
+            adjustedPreviewUrl={adjustedPreviewUrl}
+            helpText="PNG, JPEG, or WebP up to 4 MB. Adjust, zoom, and center the avatar inside the circular frame."
+            onImageChange={(file, previewUrl) => {
+              setImageFile(file);
+              setAdjustedPreviewUrl(previewUrl);
+            }}
+          />
           <div className="contentFormActions">
             <button className="secondary" type="button" onClick={reset}>Cancel</button>
             <button className="primary" type="submit" disabled={saving}>{saving ? "Saving..." : editing ? "Update Member" : "+ Add Member"}</button>
@@ -691,6 +734,7 @@ export function LeadershipManager({ notify, onUnauthorized }: { notify: Notify; 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  useBodyScrollLock(showForm);
   const [editing, setEditing] = useState<LeadershipMember | null>(null);
   const [pendingDelete, setPendingDelete] = useState<LeadershipMember | null>(null);
   const [name, setName] = useState("");
@@ -698,6 +742,7 @@ export function LeadershipManager({ notify, onUnauthorized }: { notify: Notify; 
   const [tenure, setTenure] = useState("");
   const [displayOrder, setDisplayOrder] = useState("0");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [adjustedPreviewUrl, setAdjustedPreviewUrl] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -739,6 +784,7 @@ export function LeadershipManager({ notify, onUnauthorized }: { notify: Notify; 
     setTenure("");
     setDisplayOrder("0");
     setImageFile(null);
+    setAdjustedPreviewUrl(null);
     const input = document.getElementById("leadership-image") as HTMLInputElement | null;
     if (input) input.value = "";
   }
@@ -751,6 +797,7 @@ export function LeadershipManager({ notify, onUnauthorized }: { notify: Notify; 
     setTenure(member.tenure);
     setDisplayOrder(String(member.displayOrder));
     setImageFile(null);
+    setAdjustedPreviewUrl(null);
   }
 
   function createNew() {
@@ -813,9 +860,19 @@ export function LeadershipManager({ notify, onUnauthorized }: { notify: Notify; 
             </div>
             <label htmlFor="leadership-tenure">Tenure line</label>
             <input id="leadership-tenure" required maxLength={120} value={tenure} onChange={(event) => setTenure(event.target.value)} placeholder="Advisor Since 2021" />
-            <label htmlFor="leadership-image">Portrait image</label>
-            <input id="leadership-image" type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setImageFile(event.target.files?.[0] || null)} />
-            <span className="formHelp">PNG, JPEG, or WebP up to 4 MB. Use a vertical or roomy portrait; the page crops it from the top centre. Leave empty while editing to keep the current image.</span>
+            <ImageFieldWithAdjuster
+              label="Portrait Image"
+              id="leadership-image"
+              aspectType="portrait"
+              currentImageUrl={editing?.imageUrl}
+              selectedFile={imageFile}
+              adjustedPreviewUrl={adjustedPreviewUrl}
+              helpText="PNG, JPEG, or WebP up to 4 MB. Crop, zoom, and align the face and shoulders into the vertical frame."
+              onImageChange={(file, previewUrl) => {
+                setImageFile(file);
+                setAdjustedPreviewUrl(previewUrl);
+              }}
+            />
             <div className="contentFormActions">
               <button className="secondary" type="button" onClick={reset}>Cancel</button>
               <button className="primary" type="submit" disabled={saving}>{saving ? "Saving..." : editing ? "Update Member" : "+ Add Member"}</button>
@@ -946,12 +1003,14 @@ export function CollaborationManager({ notify, onUnauthorized }: { notify: Notif
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  useBodyScrollLock(showForm);
   const [editing, setEditing] = useState<Collaboration | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Collaboration | null>(null);
   const [name, setName] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [displayOrder, setDisplayOrder] = useState("0");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [adjustedPreviewUrl, setAdjustedPreviewUrl] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -990,6 +1049,7 @@ export function CollaborationManager({ notify, onUnauthorized }: { notify: Notif
     setWebsiteUrl("");
     setDisplayOrder("0");
     setImageFile(null);
+    setAdjustedPreviewUrl(null);
     setEditing(null);
     setShowForm(false);
   }
@@ -999,6 +1059,7 @@ export function CollaborationManager({ notify, onUnauthorized }: { notify: Notif
     setWebsiteUrl(item.websiteUrl || "");
     setDisplayOrder(String(item.displayOrder));
     setImageFile(null);
+    setAdjustedPreviewUrl(null);
     setEditing(item);
     setShowForm(true);
   }
@@ -1092,18 +1153,19 @@ export function CollaborationManager({ notify, onUnauthorized }: { notify: Notif
                   />
                 </div>
               </div>
-              <label htmlFor="collab-image">Partner Logo / Picture</label>
-              <input
+              <ImageFieldWithAdjuster
+                label="Partner Logo / Avatar"
                 id="collab-image"
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={(event) => setImageFile(event.target.files?.[0] || null)}
+                aspectType="circle"
+                currentImageUrl={editing?.imageUrl}
+                selectedFile={imageFile}
+                adjustedPreviewUrl={adjustedPreviewUrl}
+                helpText="PNG, JPEG, or WebP up to 4 MB. Scale, rotate, and center the logo inside the circular marquee badge."
+                onImageChange={(file, previewUrl) => {
+                  setImageFile(file);
+                  setAdjustedPreviewUrl(previewUrl);
+                }}
               />
-              <span className="formHelp">
-                {editing
-                  ? "PNG, JPEG, or WebP up to 4 MB. Leave empty to keep existing logo."
-                  : "Upload a clean logo (transparent PNG or JPEG recommended)."}
-              </span>
               <div className="contentFormActions">
                 <button className="secondary" type="button" onClick={reset}>Cancel</button>
                 <button className="primary" type="submit" disabled={saving}>
