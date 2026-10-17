@@ -660,7 +660,7 @@ export default function AdminPage() {
     <div className="adminShell">
       <aside className="adminSidebar">
         <Link className="adminSidebarBrand" href="/">
-          <Image className="adminSidebarBrandImage" src="/ieee-society-logo.png" alt="IEEE Society Superior University" width={218} height={103} priority />
+          <Image className="adminSidebarBrandImage" src="/ieee-society-logo-white-text.png" alt="IEEE Society Superior University" width={218} height={103} priority />
         </Link>
 
         <div className="adminSidebarPortal"><LayoutDashboard size={16} /><span>Administration Portal</span></div>

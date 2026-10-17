@@ -677,13 +677,13 @@ export function TeamManager({ notify, onUnauthorized }: { notify: Notify; onUnau
           <label htmlFor="member-bio">Short bio</label>
           <textarea id="member-bio" maxLength={400} value={bio} onChange={(event) => setBio(event.target.value)} placeholder="Optional short introduction" />
           <ImageFieldWithAdjuster
-            label="Profile Image (Avatar)"
+            label="Profile Image (Portrait)"
             id="member-image"
-            aspectType="circle"
+            aspectType="portrait"
             currentImageUrl={editing?.imageUrl}
             selectedFile={imageFile}
             adjustedPreviewUrl={adjustedPreviewUrl}
-            helpText="PNG, JPEG, or WebP up to 4 MB. Adjust, zoom, and center the avatar inside the circular frame."
+            helpText="PNG, JPEG, or WebP up to 4 MB. Adjust, zoom, and align the face, shoulders, and chest into the vertical frame."
             onImageChange={(file, previewUrl) => {
               setImageFile(file);
               setAdjustedPreviewUrl(previewUrl);
@@ -715,7 +715,7 @@ export function TeamManager({ notify, onUnauthorized }: { notify: Notify; onUnau
           <div className="contentAdminList">
             {visibleMembers.map((member) => (
               <article key={member.id}>
-                <div className="contentThumb round">{member.imageUrl ? <Image src={member.imageUrl} alt="" fill unoptimized loading="lazy" sizes="116px" style={{ objectFit: "cover", objectPosition: "center top" }} /> : <span>{member.name.slice(0, 2).toUpperCase()}</span>}</div>
+                <div className="contentThumb teamThumb leadershipThumb">{member.imageUrl ? <Image src={member.imageUrl} alt="" fill unoptimized loading="lazy" sizes="100px" style={{ objectFit: "cover", objectPosition: "center top" }} /> : <span>{member.name.slice(0, 2).toUpperCase()}</span>}</div>
                 <div className="contentAdminMeta"><strong>{member.name}</strong><span>{TEAM_CATEGORIES.find((team) => team.slug === member.category)?.name || "Executive Body"} · {member.role} · Order {member.displayOrder}</span><p>{member.bio || "No bio added."}</p></div>
                 <div className="contentAdminActions"><button className="tableAction" type="button" onClick={() => edit(member)}>Edit</button><button className="tableAction tableDelete" type="button" onClick={() => setPendingDelete(member)}>Delete</button></div>
               </article>
@@ -1111,7 +1111,7 @@ export function CollaborationManager({ notify, onUnauthorized }: { notify: Notif
   }
 
   return (
-    <div className="contentManagement listOnly">
+    <div className="contentManagement listOnly collaborationManagement">
       {showForm && (
         <div className="contentEditorModal" role="presentation">
           <section className="contentFormCard contentEditorPanel">
@@ -1198,7 +1198,7 @@ export function CollaborationManager({ notify, onUnauthorized }: { notify: Notif
           <div className="contentAdminList">
             {collaborations.map((item) => (
               <article key={item.id}>
-                <div className="contentThumb" style={{ borderRadius: "8px", background: "#f1f5f9" }}>
+                <div className="contentThumb collabThumb">
                   {item.imageUrl ? (
                     <Image
                       src={item.imageUrl}
@@ -1207,7 +1207,7 @@ export function CollaborationManager({ notify, onUnauthorized }: { notify: Notif
                       unoptimized
                       loading="lazy"
                       sizes="80px"
-                      style={{ objectFit: "contain", padding: "6px" }}
+                      style={{ objectFit: "cover", objectPosition: "center", borderRadius: "50%" }}
                     />
                   ) : (
                     <span>{item.name.slice(0, 2).toUpperCase()}</span>

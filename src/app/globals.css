@@ -2509,6 +2509,14 @@ th{
     border:1px solid var(--line);
     border-radius:16px;
     background:#fbfdff;
+    transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;
+}
+
+.collaborationLogos>div:hover{
+    transform:translateY(-5px);
+    border-color:#bfdbfe;
+    box-shadow:0 18px 40px rgba(16,44,80,.09);
+    background:white;
 }
 
 .collaborationLogos strong{
@@ -5261,16 +5269,37 @@ footer{
 
 .teamManagement .contentAdminList>article,
 .teamManagement.listOnly .contentAdminList>article{
-    grid-template-columns:116px minmax(260px,1fr) auto;
-    min-height:148px;
+    grid-template-columns:82px minmax(0,1fr) auto;
+    align-items:center;
+    min-height:96px;
 }
 
+.teamManagement .teamThumb,
 .teamManagement .contentThumb.round{
-    width:108px;
-    height:124px;
-    border-radius:14px;
+    width:72px;
+    height:88px;
+    border-radius:12px;
     background:linear-gradient(145deg,#e9f4ff,#cfe7ff);
     outline:1px solid #d7e6f5;
+}
+
+.collaborationManagement .contentAdminList>article,
+.collaborationManagement.listOnly .contentAdminList>article{
+    grid-template-columns:76px minmax(0,1fr) auto;
+    align-items:center;
+    min-height:88px;
+}
+
+.collaborationManagement .collabThumb{
+    width:66px;
+    height:66px;
+    border-radius:50%;
+    overflow:hidden;
+    background:white;
+    border:1.5px solid #dbeafe;
+    box-shadow:0 3px 10px rgba(16,44,80,.07);
+    display:grid;
+    place-items:center;
 }
 
 .contentAdminMeta{
@@ -6066,7 +6095,7 @@ footer{
 @media(max-width:620px){
   .contentManagement{min-width:0;width:100%}
   .contentManagement .contentEditorModal{padding:12px 8px;align-items:flex-start}
-  .contentManagement .contentEditorPanel{width:100%;max-width:none;overflow:visible;padding:0;border-radius:14px}
+  .contentManagement .contentEditorPanel{width:100%;max-width:none;overflow:visible;padding:18px 14px;border-radius:16px;background:white;box-shadow:0 12px 35px rgba(16,44,80,.12)}
   .contentManagement .contentFormRow{grid-template-columns:1fr;gap:10px}
   .contentManagement .contentFormActions{display:grid;grid-template-columns:1fr;gap:8px}
   .contentManagement .contentFormActions button,
@@ -6079,10 +6108,13 @@ footer{
   .contentManagement .contentAdminList{gap:9px}
   .contentManagement .contentAdminList>article,
   .contentManagement.listOnly .contentAdminList>article{grid-template-columns:58px minmax(0,1fr);gap:10px;padding:10px}
-  .contentManagement .contentThumb{width:58px;height:58px}
   .contentManagement.teamManagement .contentAdminList>article,
-  .contentManagement.teamManagement.listOnly .contentAdminList>article{grid-template-columns:88px minmax(0,1fr)}
-  .contentManagement.teamManagement .contentThumb.round{width:82px;height:98px;border-radius:12px}
+  .contentManagement.teamManagement.listOnly .contentAdminList>article{grid-template-columns:70px minmax(0,1fr)}
+  .contentManagement.teamManagement .teamThumb,
+  .contentManagement.teamManagement .contentThumb.round{width:64px;height:78px;border-radius:12px}
+  .contentManagement.collaborationManagement .contentAdminList>article,
+  .contentManagement.collaborationManagement.listOnly .contentAdminList>article{grid-template-columns:62px minmax(0,1fr)}
+  .contentManagement.collaborationManagement .collabThumb{width:56px;height:56px;border-radius:50%}
   .contentManagement .contentAdminMeta strong{font-size:12px;overflow-wrap:anywhere}
   .contentManagement .contentAdminMeta p{font-size:10px;overflow-wrap:anywhere}
   .contentManagement .contentAdminActions,
@@ -6724,6 +6756,13 @@ footer{
     border-radius:16px;
     background:white;
     box-shadow:0 10px 32px rgba(16,44,80,.06);
+    transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;
+}
+
+.verifySteps article:hover{
+    transform:translateY(-5px);
+    border-color:#bfdbfe;
+    box-shadow:0 20px 48px rgba(16,44,80,.12);
 }
 
 .verifySteps article>svg{

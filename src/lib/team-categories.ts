@@ -16,7 +16,7 @@ export const TEAM_CATEGORIES: TeamCategoryDefinition[] = [
     cardTitle: "IEEE CS Executive Body",
     description: "The core team responsible for strategic direction, overall management, and successful execution of IEEE CS activities at Superior University.",
     shortDescription: "Leading the chapter with vision, responsibility, and purpose.",
-    image: "/team.jpeg",
+    image: "/team-executive-body.png",
   },
   {
     slug: "marketing-team",
@@ -24,7 +24,7 @@ export const TEAM_CATEGORIES: TeamCategoryDefinition[] = [
     cardTitle: "IEEE CS Marketing Team",
     description: "The creative team building awareness, promoting initiatives, and presenting IEEE CS activities across digital and campus platforms.",
     shortDescription: "Sharing our work and growing the IEEE CS community.",
-    image: "/new_pic1.jpeg",
+    image: "/team-marketing-team.png",
   },
   {
     slug: "communication-team",
@@ -32,7 +32,7 @@ export const TEAM_CATEGORIES: TeamCategoryDefinition[] = [
     cardTitle: "IEEE CS Communication Team",
     description: "The team connecting members, partners, and audiences through clear communication, coordination, and community engagement.",
     shortDescription: "Keeping members, partners, and audiences connected.",
-    image: "/new_pic2.jpeg",
+    image: "/team-communication-team.png",
   },
   {
     slug: "event-management-team",
@@ -40,7 +40,7 @@ export const TEAM_CATEGORIES: TeamCategoryDefinition[] = [
     cardTitle: "IEEE CS Event Management Team",
     description: "The organizers responsible for planning, coordinating, and delivering smooth workshops, sessions, and society events.",
     shortDescription: "Turning ideas into well-organized experiences.",
-    image: "/new_pic3.jpeg",
+    image: "/team-event-management-team.png",
   },
   {
     slug: "media-team",
@@ -48,7 +48,7 @@ export const TEAM_CATEGORIES: TeamCategoryDefinition[] = [
     cardTitle: "IEEE CS Media Team",
     description: "The visual storytellers documenting society activities through photography, video, design, and creative digital content.",
     shortDescription: "Capturing and presenting every important moment.",
-    image: "/new_pic4.jpeg",
+    image: "/team-media-team.png",
   },
 ];
 
