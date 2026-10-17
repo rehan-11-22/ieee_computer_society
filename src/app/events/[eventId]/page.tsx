@@ -27,12 +27,14 @@ function contentHeading(value: string) {
 
 export default async function EventDetailPage({ params }: { params: Promise<{ eventId: string }> }) {
   const { eventId } = await params;
-  const event = await getPublicEventById(eventId);
+  const [event, gallery] = await Promise.all([
+    getPublicEventById(eventId),
+    getPublicEventGallery(eventId),
+  ]);
   if (!event) {
     notFound();
     return null;
   }
-  const gallery = await getPublicEventGallery(eventId);
   const sections = event.pageSections.length > 0
     ? event.pageSections
     : gallery.length > 0
@@ -59,7 +61,6 @@ export default async function EventDetailPage({ params }: { params: Promise<{ ev
                 src={event.imageUrl}
                 alt={event.title}
                 fill
-                unoptimized
                 preload
                 sizes="(max-width: 850px) 100vw, 50vw"
                 style={{ objectFit: "cover" }}

@@ -44,11 +44,6 @@ export function ImageAdjustModal({
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ x: number; y: number; panX: number; panY: number }>({ x: 0, y: 0, panX: 0, panY: 0 });
   const [exporting, setExporting] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Lock body scroll while this overlay is open
   useEffect(() => {
@@ -80,7 +75,6 @@ export function ImageAdjustModal({
   // Safe Image Loading without CORS blocks
   useEffect(() => {
     let cancelled = false;
-    setLoadError(false);
     const img = new Image();
 
     // Only set crossOrigin for external http(s) URLs, never for data: or blob:
@@ -90,6 +84,7 @@ export function ImageAdjustModal({
 
     img.onload = () => {
       if (cancelled) return;
+      setLoadError(false);
       setImageElement(img);
       setPan({ x: 0, y: 0 });
       setZoom(1);
@@ -376,7 +371,7 @@ export function ImageAdjustModal({
     }
   };
 
-  if (!mounted) return null;
+  if (typeof document === "undefined") return null;
 
   const content = (
     <div className="imageAdjustOverlay" role="dialog" aria-modal="true" aria-label={title}>

@@ -40,7 +40,7 @@ export function SiteHeader() {
         <Image
           className="siteBrandMark"
           src="/ieee-society-logo.png"
-          alt="IEEE Society Superior University"
+          alt="IEEE CS Society Superior University"
           width={310}
           height={70}
           priority

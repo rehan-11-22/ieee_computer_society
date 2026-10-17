@@ -102,7 +102,7 @@ export default async function AboutPage() {
               <article className="leaderCard customLeaderCard" key={member.id}>
                 <div className={`leadershipPortrait${member.imageUrl ? " hasImage" : ""}`}>
                   {member.imageUrl ? (
-                    <Image src={member.imageUrl} alt={`${member.name}, ${member.role}`} fill unoptimized loading="lazy" sizes="(max-width: 640px) 72vw, 240px" />
+                    <Image src={member.imageUrl} alt={`${member.name}, ${member.role}`} fill loading="lazy" sizes="(max-width: 640px) 72vw, 240px" />
                   ) : <UsersRound size={42} />}
                 </div>
                 <div className="leadershipDetails">
@@ -140,7 +140,7 @@ export default async function AboutPage() {
           <div className="eventPreviewGrid">
             {featuredEvents.map((event) => (
               <article key={event.id}>
-                <div>{event.imageUrl ? <Image src={event.imageUrl} alt={event.title} fill unoptimized loading="lazy" sizes="(max-width: 700px) 100vw, 33vw" style={{ objectFit: "cover" }} /> : <div className="eventImageFallback"><CalendarDays size={40} /><span>IEEE CS Event</span></div>}</div>
+                <div>{event.imageUrl ? <Image src={event.imageUrl} alt={event.title} fill loading="lazy" sizes="(max-width: 700px) 100vw, 33vw" style={{ objectFit: "cover" }} /> : <div className="eventImageFallback"><CalendarDays size={40} /><span>IEEE CS Event</span></div>}</div>
                 <section><span>{event.eventDate}</span><h3>{event.title}</h3><p>{event.description}</p></section>
               </article>
             ))}

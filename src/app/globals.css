@@ -3762,14 +3762,21 @@ footer{
 }
 
 .socialLinks a svg{
-    width:42px;
-    height:42px;
+    width:40px;
+    height:40px;
     display:block;
     color:#0a66c2;
 }
 
-.socialLinks a:first-child svg{
+.socialLinks a svg.instagramIcon{
+    width:34px;
+    height:34px;
     color:#d62976;
+}
+
+.socialLinks a svg.linkedinIcon{
+    width:40px;
+    height:40px;
 }
 
 .socialLinks a:first-child,
@@ -4786,7 +4793,7 @@ footer{
 }
 
 .contentEditorModal{
-    align-items:flex-start;
+    align-items:center;
     background:rgba(8,27,49,.6);
     backdrop-filter:blur(4px);
     display:flex;
@@ -4802,7 +4809,10 @@ footer{
 
 .contentEditorPanel{
     width:min(760px,100%);
-    margin:auto 0;
+    max-height:calc(100dvh - 48px);
+    overflow-x:hidden;
+    overflow-y:auto;
+    margin:0;
     position:relative;
     flex-shrink:0;
 }
@@ -5283,6 +5293,83 @@ footer{
     outline:1px solid #d7e6f5;
 }
 
+.teamMemberViewModal{
+    z-index:320;
+}
+
+.teamMemberViewPanel{
+    position:relative;
+    display:grid;
+    grid-template-columns:minmax(180px,220px) minmax(0,1fr);
+    align-items:center;
+    gap:26px;
+    width:min(620px,100%);
+    max-height:calc(100dvh - 48px);
+    overflow:auto;
+    padding:26px;
+    border:1px solid var(--line);
+    border-radius:18px;
+    background:#fff;
+    box-shadow:0 24px 70px rgba(8,27,49,.24);
+}
+
+.teamMemberViewImage{
+    position:relative;
+    width:100%;
+    aspect-ratio:3 / 4;
+    overflow:hidden;
+    border:1px solid #d7e6f5;
+    border-radius:14px;
+    background:linear-gradient(145deg,#e9f4ff,#cfe7ff);
+    color:var(--navy);
+    display:grid;
+    place-items:center;
+    font-size:28px;
+    font-weight:800;
+}
+
+.teamMemberViewContent h3{
+    margin:8px 0 12px;
+    color:var(--navy);
+    font-size:28px;
+}
+
+.teamMemberViewRole{
+    display:block;
+    width:fit-content;
+    max-width:100%;
+    padding:10px 14px;
+    border-radius:9px;
+    background:#eaf4ff;
+    color:#1670d1;
+    overflow-wrap:anywhere;
+}
+
+.teamMemberViewContent p{
+    margin:16px 0 0;
+    color:var(--muted);
+    line-height:1.7;
+    overflow-wrap:anywhere;
+}
+
+.teamMemberViewClose{
+    position:absolute;
+    top:12px;
+    right:12px;
+    z-index:1;
+    width:34px;
+    height:34px;
+    border:0;
+    border-radius:50%;
+    background:#edf3fa;
+    color:var(--navy);
+    cursor:pointer;
+    font-size:24px;
+    line-height:1;
+}
+
+.teamMemberViewClose:hover{background:#dceafa}
+
 .collaborationManagement .contentAdminList>article,
 .collaborationManagement.listOnly .contentAdminList>article{
     grid-template-columns:76px minmax(0,1fr) auto;
@@ -5363,6 +5450,8 @@ footer{
 
     .contentEditorPanel{
         max-height:calc(100dvh - 20px);
+        overflow-x:hidden;
+        overflow-y:auto;
         padding:20px;
     }
 
@@ -6094,8 +6183,8 @@ footer{
 /* ================= ADMIN MOBILE CONTENT MANAGERS ================= */
 @media(max-width:620px){
   .contentManagement{min-width:0;width:100%}
-  .contentManagement .contentEditorModal{padding:12px 8px;align-items:flex-start}
-  .contentManagement .contentEditorPanel{width:100%;max-width:none;overflow:visible;padding:18px 14px;border-radius:16px;background:white;box-shadow:0 12px 35px rgba(16,44,80,.12)}
+  .contentManagement .contentEditorModal{padding:12px 8px;align-items:center}
+  .contentManagement .contentEditorPanel{width:100%;max-width:none;max-height:calc(100dvh - 24px);overflow-x:hidden;overflow-y:auto;padding:18px 14px;border-radius:16px;background:white;box-shadow:0 12px 35px rgba(16,44,80,.12)}
   .contentManagement .contentFormRow{grid-template-columns:1fr;gap:10px}
   .contentManagement .contentFormActions{display:grid;grid-template-columns:1fr;gap:8px}
   .contentManagement .contentFormActions button,
@@ -6121,6 +6210,9 @@ footer{
   .contentManagement.listOnly .contentAdminActions{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;width:100%}
   .contentManagement .contentAdminActions button{width:100%;min-height:40px}
   .contentManagement .contentAdminActions button:last-child:nth-child(odd){grid-column:1/-1}
+  .teamMemberViewPanel{grid-template-columns:1fr;gap:18px;width:100%;max-height:calc(100dvh - 24px);padding:20px 16px}
+  .teamMemberViewImage{width:min(190px,70vw);margin:0 auto}
+  .teamMemberViewContent h3{font-size:23px}
   .contentManagement .eventBuilderToolbar{display:grid;grid-template-columns:1fr 1fr;gap:7px}
   .contentManagement .eventBuilderToolbar button{width:100%;min-height:42px}
   .contentManagement .eventPreviewGrid{grid-template-columns:1fr}
@@ -6466,6 +6558,106 @@ footer{
     white-space:nowrap;
 }
 
+.teamMemberViewButton{
+    align-items:center;
+    align-self:center;
+    display:inline-flex;
+    gap:5px;
+    min-height:32px;
+    padding:7px 11px;
+    border:1px solid #2563eb;
+    border-radius:8px;
+    background:#2563eb;
+    color:#fff;
+    font-size:11px;
+    font-weight:700;
+}
+
+.teamMemberViewButton:hover{background:#1d4ed8;border-color:#1d4ed8}
+
+.publicTeamViewOverlay{
+    position:fixed;
+    inset:0;
+    z-index:400;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    background:rgba(8,27,49,.62);
+    backdrop-filter:blur(5px);
+}
+
+.publicTeamViewPanel{
+    position:relative;
+    display:grid;
+    grid-template-columns:minmax(190px,260px) minmax(0,1fr);
+    align-items:center;
+    gap:28px;
+    width:min(680px,100%);
+    max-height:calc(100dvh - 40px);
+    overflow:auto;
+    padding:28px;
+    border:1px solid #d9e7f4;
+    border-radius:18px;
+    background:#fff;
+    box-shadow:0 24px 70px rgba(8,27,49,.28);
+}
+
+.publicTeamViewImage{
+    position:relative;
+    width:100%;
+    aspect-ratio:3 / 4;
+    overflow:hidden;
+    display:grid;
+    place-items:center;
+    border-radius:15px;
+    background:linear-gradient(145deg,#e9f4ff,#cfe7ff);
+    color:#176fc3;
+    font-size:30px;
+    font-weight:800;
+}
+
+.publicTeamViewDetails h2{
+    margin:12px 0 10px;
+    color:var(--navy);
+    font-size:30px;
+}
+
+.publicTeamViewDetails strong{
+    display:block;
+    width:fit-content;
+    max-width:100%;
+    padding:10px 14px;
+    border-radius:8px;
+    background:#edf6ff;
+    color:#176fc3;
+    overflow-wrap:anywhere;
+}
+
+.publicTeamViewDetails p{
+    margin:18px 0 0;
+    color:var(--muted);
+    line-height:1.7;
+    overflow-wrap:anywhere;
+}
+
+.publicTeamViewClose{
+    position:absolute;
+    top:12px;
+    right:12px;
+    z-index:1;
+    display:grid;
+    place-items:center;
+    width:34px;
+    height:34px;
+    border:0;
+    border-radius:50%;
+    background:#edf3fa;
+    color:var(--navy);
+}
+
+.publicTeamViewClose:hover{background:#dceafa}
+
 .teamCategoryEmpty{
     display:flex;
     flex-direction:column;
@@ -6530,6 +6722,11 @@ footer{
     .teamCategoryMemberCard{min-height:152px;gap:14px;padding:14px}
     .teamCategoryMemberPhoto{width:104px;height:124px;flex-basis:104px;border-radius:13px}
     .teamCategoryMemberInfo strong{font-size:15px}
+    .teamMemberViewButton{align-self:center;justify-content:center}
+    .publicTeamViewOverlay{padding:12px 8px}
+    .publicTeamViewPanel{grid-template-columns:1fr;gap:18px;width:100%;max-height:calc(100dvh - 24px);padding:22px 16px}
+    .publicTeamViewImage{width:min(190px,68vw);margin:0 auto}
+    .publicTeamViewDetails h2{font-size:24px}
 }
 
 .verifyPortalPage{
@@ -8219,7 +8416,9 @@ footer{
 .imagePreviewCard{
     display:flex;
     align-items:center;
+    flex-wrap:wrap;
     gap:14px;
+    min-width:0;
     padding:10px 14px;
     border-radius:14px;
     background:#f8fafc;
@@ -8236,6 +8435,8 @@ footer{
     background:white;
     border:1.5px solid #cbd5e1;
     box-shadow:0 3px 10px rgba(0,0,0,.06);
+    position:relative;
+    z-index:0;
 }
 
 .imagePreviewBox.circle{
@@ -8268,6 +8469,8 @@ footer{
 .imagePreviewActions{
     display:flex;
     flex-wrap:wrap;
+    flex:1 1 220px;
+    min-width:0;
     gap:7px;
 }
 
@@ -8432,6 +8635,10 @@ footer{
         width:100% !important;
         display:grid !important;
         grid-template-columns:1fr 1fr !important;
+        grid-auto-rows:minmax(38px,auto) !important;
+        align-items:start !important;
+        align-self:stretch !important;
+        flex:0 0 auto !important;
         gap:8px !important;
     }
 
@@ -8444,6 +8651,8 @@ footer{
         padding:9px 10px !important;
         font-size:12px !important;
         min-height:38px !important;
+        height:auto !important;
+        align-self:start !important;
     }
 
     .imageUploadDropzone{

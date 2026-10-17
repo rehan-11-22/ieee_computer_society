@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ChevronRight, Home, Sparkles } from "lucide-react";
 import { notFound } from "next/navigation";
 import { listPublicTeamMembers } from "@/lib/public-content";
 import { getTeamCategory, TEAM_CATEGORIES } from "@/lib/team-categories";
+import { PublicTeamMemberGrid } from "@/components/PublicTeamMemberGrid";
 
 export const revalidate = 30;
 export const dynamicParams = false;
@@ -53,29 +53,7 @@ export default async function TeamCategoryPage({ params }: { params: Promise<{ c
             <p>Members added to this team from the admin dashboard will appear here automatically.</p>
           </div>
         ) : (
-          <div className="teamCategoryMemberGrid">
-            {members.map((member) => (
-              <article key={member.id} className="teamCategoryMemberCard">
-                <span className={`teamCategoryMemberPhoto${member.imageUrl ? " hasImage" : ""}`}>
-                  {member.imageUrl ? (
-                    <Image
-                      src={member.imageUrl}
-                      alt={member.name}
-                      fill
-                      unoptimized
-                      loading="lazy"
-                      sizes="(max-width: 560px) 104px, 124px"
-                      style={{ objectFit: "cover", objectPosition: "center top" }}
-                    />
-                  ) : member.name.slice(0, 2).toUpperCase()}
-                </span>
-                <span className="teamCategoryMemberInfo">
-                  <strong>{member.name}</strong>
-                  <small>{member.role}</small>
-                </span>
-              </article>
-            ))}
-          </div>
+          <PublicTeamMemberGrid members={members} />
         )}
       </section>
     </main>

@@ -152,6 +152,27 @@ export async function updateCertificateTemplateLayout(
   return document ? serializeTemplate(document) : null;
 }
 
+export async function deleteCertificateTemplate(id: string) {
+  const objectId = templateObjectId(id);
+  if (!objectId) return null;
+  const collection = await templateCollection();
+  const existing = await collection.findOne({ _id: objectId });
+  if (!existing) return null;
+
+  const deleted = await collection.deleteOne({ _id: objectId });
+  if (!deleted.deletedCount) return null;
+
+  if (existing.isDefault) {
+    const replacement = await collection.findOne({}, { sort: { createdAt: -1 } });
+    if (replacement) {
+      await collection.updateMany({ isDefault: true }, { $set: { isDefault: false, updatedAt: new Date() } });
+      await collection.updateOne({ _id: replacement._id }, { $set: { isDefault: true, updatedAt: new Date() } });
+    }
+  }
+
+  return { id };
+}
+
 export async function certificateTemplateExists(id: string) {
   const objectId = templateObjectId(id);
   if (!objectId) return false;

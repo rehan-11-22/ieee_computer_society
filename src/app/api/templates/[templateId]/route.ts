@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
-import { setDefaultCertificateTemplate, updateCertificateTemplateLayout } from "@/lib/templates";
+import { deleteCertificateTemplate, setDefaultCertificateTemplate, updateCertificateTemplateLayout } from "@/lib/templates";
 import { parseCertificateTemplateLayout } from "@/lib/certificate-template-layout";
 
 export async function PATCH(
@@ -38,5 +38,25 @@ export async function PATCH(
   } catch (error) {
     console.error("Default certificate template error:", error);
     return NextResponse.json({ error: "Failed to set the default template" }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ templateId: string }> },
+) {
+  try {
+    if (!(await getCurrentSession())) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { templateId } = await params;
+    const deleted = await deleteCertificateTemplate(templateId);
+    if (!deleted) {
+      return NextResponse.json({ error: "Certificate template was not found" }, { status: 404 });
+    }
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Certificate template delete error:", error);
+    return NextResponse.json({ error: "Failed to delete certificate template" }, { status: 500 });
   }
 }

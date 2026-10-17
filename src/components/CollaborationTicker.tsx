@@ -24,7 +24,6 @@ export async function CollaborationTicker() {
                       src={item.imageUrl}
                       alt={item.name}
                       fill
-                      unoptimized
                       loading="lazy"
                       sizes="80px"
                       className="collabCircleImg"

@@ -239,7 +239,7 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
     fetch("/api/events", { cache: "no-store" })
       .then(async (response) => {
         if (response.status === 401) {
-          window.location.reload();
+          onUnauthorized();
           return [];
         }
         if (!response.ok) throw new Error("Events could not be loaded");
@@ -249,7 +249,7 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
       .catch(() => undefined)
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [onUnauthorized]);
 
   function reset() {
     setEditing(null);
@@ -317,11 +317,6 @@ export function EventManager({ notify, onUnauthorized }: { notify: Notify; onUna
       [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
       return reordered;
     });
-  }
-
-  function chooseEventImage(file: File | null) {
-    setImageFile(file);
-    setImagePreviewUrl(file ? URL.createObjectURL(file) : editing?.imageUrl || null);
   }
 
   async function save(event: FormEvent) {
@@ -540,9 +535,10 @@ export function TeamManager({ notify, onUnauthorized }: { notify: Notify; onUnau
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  useBodyScrollLock(showForm);
   const [editing, setEditing] = useState<TeamMember | null>(null);
+  const [viewing, setViewing] = useState<TeamMember | null>(null);
   const [pendingDelete, setPendingDelete] = useState<TeamMember | null>(null);
+  useBodyScrollLock(showForm || Boolean(viewing));
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [bio, setBio] = useState("");
@@ -717,12 +713,33 @@ export function TeamManager({ notify, onUnauthorized }: { notify: Notify; onUnau
               <article key={member.id}>
                 <div className="contentThumb teamThumb leadershipThumb">{member.imageUrl ? <Image src={member.imageUrl} alt="" fill unoptimized loading="lazy" sizes="100px" style={{ objectFit: "cover", objectPosition: "center top" }} /> : <span>{member.name.slice(0, 2).toUpperCase()}</span>}</div>
                 <div className="contentAdminMeta"><strong>{member.name}</strong><span>{TEAM_CATEGORIES.find((team) => team.slug === member.category)?.name || "Executive Body"} · {member.role} · Order {member.displayOrder}</span><p>{member.bio || "No bio added."}</p></div>
-                <div className="contentAdminActions"><button className="tableAction" type="button" onClick={() => edit(member)}>Edit</button><button className="tableAction tableDelete" type="button" onClick={() => setPendingDelete(member)}>Delete</button></div>
+                <div className="contentAdminActions"><button className="tableAction" type="button" onClick={() => setViewing(member)}><Eye size={14} /> View</button><button className="tableAction" type="button" onClick={() => edit(member)}>Edit</button><button className="tableAction tableDelete" type="button" onClick={() => setPendingDelete(member)}>Delete</button></div>
               </article>
             ))}
           </div>
         )}
       </section>
+
+      {viewing && (
+        <div className="contentEditorModal teamMemberViewModal" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setViewing(null); }}>
+          <section className="teamMemberViewPanel" role="dialog" aria-modal="true" aria-labelledby="team-member-view-title">
+            <button className="teamMemberViewClose" type="button" aria-label="Close member preview" title="Close" onClick={() => setViewing(null)}>×</button>
+            <div className="teamMemberViewImage">
+              {viewing.imageUrl ? (
+                <Image src={viewing.imageUrl} alt={viewing.name} fill unoptimized sizes="220px" style={{ objectFit: "cover", objectPosition: "center top" }} />
+              ) : (
+                <span>{viewing.name.slice(0, 2).toUpperCase()}</span>
+              )}
+            </div>
+            <div className="teamMemberViewContent">
+              <span className="eyebrow">{TEAM_CATEGORIES.find((team) => team.slug === viewing.category)?.name || "Team Member"}</span>
+              <h3 id="team-member-view-title">{viewing.name}</h3>
+              <strong className="teamMemberViewRole">{viewing.role}</strong>
+              <p>{viewing.bio || "No bio added for this member."}</p>
+            </div>
+          </section>
+        </div>
+      )}
 
       {pendingDelete && <ConfirmDelete title="Delete Team Member?" description={`${pendingDelete.name} will be permanently removed.`} onCancel={() => setPendingDelete(null)} onConfirm={() => void remove()} />}
     </div>

@@ -65,7 +65,7 @@ export function EventGalleryViewer({
                 aria-label={`Open image ${index + 1}${image.description ? `: ${image.description}` : ""}`}
               >
                 <span className="galleryImageFrame">
-                  <Image src={image.imageUrl} alt={image.description || "Event gallery image"} fill unoptimized loading="lazy" sizes="(max-width: 760px) 86vw, 33vw" style={{ objectFit: "cover" }} />
+                  <Image src={image.imageUrl} alt={image.description || "Event gallery image"} fill loading="lazy" sizes="(max-width: 760px) 86vw, 33vw" style={{ objectFit: "cover" }} />
                 </span>
                 <span className="galleryZoomHint" aria-hidden="true">View image</span>
               </button>
@@ -95,7 +95,7 @@ export function EventGalleryViewer({
           )}
           <figure className="galleryLightboxFigure">
             <div className="galleryLightboxImage">
-              <Image src={activeImage.imageUrl} alt={activeImage.description || "Event gallery image"} fill unoptimized priority sizes="100vw" style={{ objectFit: "contain" }} />
+              <Image src={activeImage.imageUrl} alt={activeImage.description || "Event gallery image"} fill priority sizes="100vw" style={{ objectFit: "contain" }} />
             </div>
             <figcaption>
               <span>{activeIndex + 1} / {gallery.length}</span>

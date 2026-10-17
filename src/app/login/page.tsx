@@ -89,6 +89,7 @@ export default function AdminPage() {
   const [templateAsDefault, setTemplateAsDefault] = useState(true);
   const [templateUploading, setTemplateUploading] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<CertificateTemplate | null>(null);
+  const [pendingTemplateDelete, setPendingTemplateDelete] = useState<CertificateTemplate | null>(null);
   const [showTemplateUpload, setShowTemplateUpload] = useState(false);
 
   const [admins, setAdmins] = useState<AdminAccount[]>([]);
@@ -473,6 +474,23 @@ export default function AdminPage() {
       showToast(`${template.name} is now the default template`);
     } catch {
       showToast("Network error while updating the template", "error");
+    }
+  };
+
+  const deleteTemplate = async () => {
+    if (!pendingTemplateDelete) return;
+    try {
+      const res = await fetch(`/api/templates/${pendingTemplateDelete.id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showToast(data.error || "Certificate template could not be deleted", "error");
+        return;
+      }
+      setPendingTemplateDelete(null);
+      await loadTemplates();
+      showToast(`${pendingTemplateDelete.name} deleted successfully`);
+    } catch {
+      showToast("Network error while deleting the template", "error");
     }
   };
 
@@ -909,6 +927,9 @@ export default function AdminPage() {
                           >
                             Edit Layout
                           </button>
+                          <button type="button" className="tableAction tableDelete" onClick={() => setPendingTemplateDelete(template)}>
+                            Delete
+                          </button>
                         </div>
                       </div>
                     </article>
@@ -1174,6 +1195,20 @@ export default function AdminPage() {
               <button className="dangerButton" type="button" onClick={() => void deleteAdminAccount()}>
                 Delete Admin
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {pendingTemplateDelete && (
+        <div className="modal" role="presentation">
+          <div className="confirmBox" role="dialog" aria-modal="true" aria-labelledby="template-delete-title">
+            <div className="confirmIcon" aria-hidden="true">!</div>
+            <h2 id="template-delete-title">Delete Template?</h2>
+            <p><strong>{pendingTemplateDelete.name}</strong> will be permanently removed. Existing certificates will keep their saved layout, while new certificates will use the next default template.</p>
+            <div className="confirmActions">
+              <button className="secondary" type="button" onClick={() => setPendingTemplateDelete(null)}>Cancel</button>
+              <button className="dangerButton" type="button" onClick={() => void deleteTemplate()}>Delete Template</button>
             </div>
           </div>
         </div>

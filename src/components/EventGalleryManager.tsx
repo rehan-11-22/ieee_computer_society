@@ -46,9 +46,7 @@ export function EventGalleryManager({ eventId, notify, onUnauthorized }: { event
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [eventId, notify]);
 
   const handleUpload = async (e: FormEvent) => {
