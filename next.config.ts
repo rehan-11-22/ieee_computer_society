@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   images: {
     // API-backed images use cache-busting query strings such as `?v=...`.
     localPatterns: [
+      { pathname: "/**" },
       { pathname: "/api/collaborations/**" },
       { pathname: "/api/events/**" },
       { pathname: "/api/leadership/**" },
