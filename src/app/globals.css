@@ -11,6 +11,8 @@ html{
 }
 
 :root{
+    --font-poppins:"Segoe UI";
+    --font-playfair:Georgia;
     --navy:#102c50;
     --blue:#2563eb;
     --blue2:#1d4ed8;

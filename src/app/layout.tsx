@@ -1,17 +1,9 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Poppins } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import Image from "next/image";
 import { Mail, MapPin, ShieldCheck, ChevronRight, Award } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
-
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-poppins",
-});
-const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
 
 export const metadata: Metadata = {
   title: "IEECS Certificate Verification Portal",
@@ -157,7 +149,7 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`${poppins.variable} ${playfair.variable} antialiased`}>
+      <body className="antialiased">
         <ConditionalLayout header={header} footer={footer}>
           {children}
         </ConditionalLayout>

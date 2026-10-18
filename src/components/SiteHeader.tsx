@@ -39,7 +39,7 @@ export function SiteHeader() {
       <Link href="/" className="brand" onClick={closeMobileMenu}>
         <Image
           className="siteBrandMark"
-          id=""
+
           src="/ieee-society-logo.png"
           alt="IEEE CS Society Superior University"
           width={310}
