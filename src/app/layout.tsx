@@ -6,8 +6,8 @@ import { Mail, MapPin, ShieldCheck, ChevronRight, Award } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 
 export const metadata: Metadata = {
-  title: "IEECS Certificate Verification Portal",
-  description: "Official Certificate Verification Portal for IEEE Computer Society Superior University Student Branch",
+  title: "IEEE CS Superior University",
+  description: "Official Website for IEEE Computer Society Superior University",
 };
 
 import { ConditionalLayout } from "../components/ConditionalLayout";
